@@ -9,21 +9,20 @@ export const load: LayoutLoad = async ({ fetch, data, depends }) => {
 		supabaseUrl: PUBLIC_SUPABASE_URL,
 		supabaseKey: PUBLIC_SUPABASE_ANON_KEY,
 		event: { fetch },
-		serverSession: data.session
+		serverSession: null // Remove serverSession since we're not using sessions anymore
 	});
 
-	const [
-		{
-			data: { session }
-		},
-		{
-			data: { user }
-		}
-	] = await Promise.all([supabase.auth.getSession(), supabase.auth.getUser()]);
+	const {
+		data: { user },
+		error
+	} = await supabase.auth.getUser();
+
+	if (error) {
+		console.error('Error fetching user:', error);
+	}
 
 	return {
 		supabase,
-		session,
 		user
 	};
 };

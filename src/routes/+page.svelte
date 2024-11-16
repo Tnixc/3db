@@ -11,10 +11,45 @@
 	let currentPath = $state('');
 
 	$effect(() => {
-		if (data.session && data.user) {
+		if (data.user) {
 			console.log('Authenticated user:', data.user);
 		}
 	});
+
+	async function fetchRepoContents(path = '') {
+		if (!repoPath) {
+			error = 'Please enter a repository path';
+			return;
+		}
+
+		loading = true;
+		error = null;
+
+		try {
+			// Get a fresh token using getSession
+			const {
+				data: { session }
+			} = await data.supabase.auth.getSession();
+			const token = session?.provider_token;
+
+			const response = await fetch(`https://api.github.com/repos/${repoPath}/contents/${path}`, {
+				headers: {
+					Authorization: `token ${token}`,
+					Accept: 'application/vnd.github.v3+json'
+				}
+			});
+
+			if (!response.ok) throw new Error('Failed to fetch repository contents');
+
+			const responseData = await response.json();
+			contents = Array.isArray(responseData) ? responseData : [responseData];
+			currentPath = path;
+		} catch (err) {
+			error = err.message;
+		} finally {
+			loading = false;
+		}
+	}
 
 	async function signIn() {
 		const { data: authData, error } = await data.supabase.auth.signInWithOAuth({
@@ -32,36 +67,6 @@
 		repoPath = '';
 		currentPath = '';
 		window.location.reload();
-	}
-
-	async function fetchRepoContents(path = '') {
-		if (!repoPath) {
-			error = 'Please enter a repository path';
-			return;
-		}
-
-		loading = true;
-		error = null;
-
-		try {
-			const token = data.session?.provider_token;
-			const response = await fetch(`https://api.github.com/repos/${repoPath}/contents/${path}`, {
-				headers: {
-					Authorization: `token ${token}`,
-					Accept: 'application/vnd.github.v3+json'
-				}
-			});
-
-			if (!response.ok) throw new Error('Failed to fetch repository contents');
-
-			const data = await response.json();
-			contents = Array.isArray(data) ? data : [data];
-			currentPath = path;
-		} catch (err) {
-			error = err.message;
-		} finally {
-			loading = false;
-		}
 	}
 
 	function handleItemClick(item) {
@@ -94,7 +99,7 @@
 </script>
 
 <div class="app">
-	{#if !data.session}
+	{#if !data.user}
 		<div>
 			<h1>GitHub Repository Viewer</h1>
 			<button on:click={signIn} class="login-button">Login with GitHub</button>
@@ -106,8 +111,8 @@
 		</div>
 
 		<div class="user-info">
-			<img src={data.session.user.user_metadata.avatar_url} alt="Profile" class="avatar" />
-			<span>{data.session.user.user_metadata.name}</span>
+			<img src={data.user.user_metadata.avatar_url} alt="Profile" class="avatar" />
+			<span>{data.user.user_metadata.name}</span>
 		</div>
 
 		<div class="repo-input">

@@ -9,16 +9,16 @@ export const handle: Handle = async ({ event, resolve }) => {
 		event
 	});
 
-	// Refresh session if it exists
-	const {
-		data: { session }
-	} = await event.locals.supabase.auth.getSession();
-
-	event.locals.getSession = async () => {
+	event.locals.getUser = async () => {
 		const {
-			data: { session }
-		} = await event.locals.supabase.auth.getSession();
-		return session;
+			data: { user },
+			error
+		} = await event.locals.supabase.auth.getUser();
+		if (error) {
+			console.error('Error fetching user:', error);
+			return null;
+		}
+		return user;
 	};
 
 	return resolve(event, {

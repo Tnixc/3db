@@ -4,14 +4,11 @@ declare global {
 	namespace App {
 		interface Locals {
 			supabase: import('@supabase/supabase-js').SupabaseClient;
-			getSession: () => Promise<import('@supabase/supabase-js').Session | null>;
+			getUser: () => Promise<import('@supabase/supabase-js').User | null>;
 		}
-		// interface Error {}
 		interface PageData {
-			session: import('@supabase/supabase-js').Session | null;
+			user: import('@supabase/supabase-js').User | null;
 		}
-		// interface PageState {}
-		// interface Platform {}
 	}
 }
 
