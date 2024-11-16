@@ -1,12 +1,15 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { goto } from '$app/navigation';
-	import { page } from '$app/stores';
-
 	let { data } = $props();
 	let repoPath = $state('');
-	let contents = $state([]);
-	let error = $state(null);
+	let contents: Array<{
+		path: string;
+		type: string;
+		name: string;
+		size: number;
+		html_url?: string;
+		last_commit_date?: string;
+	}> = $state([]);
+	let error: string | null = $state(null);
 	let loading = $state(false);
 	let currentPath = $state('');
 
@@ -26,7 +29,6 @@
 		error = null;
 
 		try {
-			// Get a fresh token using getSession
 			const {
 				data: { session }
 			} = await data.supabase.auth.getSession();
@@ -45,7 +47,11 @@
 			contents = Array.isArray(responseData) ? responseData : [responseData];
 			currentPath = path;
 		} catch (err) {
-			error = err.message;
+			if (err instanceof Error) {
+				error = err.message;
+			} else {
+				error = 'An unknown error occurred';
+			}
 		} finally {
 			loading = false;
 		}
@@ -69,7 +75,7 @@
 		window.location.reload();
 	}
 
-	function handleItemClick(item) {
+	function handleItemClick(item: { type: string; path: string; html_url?: string }) {
 		if (item.type === 'dir') {
 			fetchRepoContents(item.path);
 		} else {
@@ -77,23 +83,23 @@
 		}
 	}
 
-	function navigateToPath(path) {
+	function navigateToPath(path: string) {
 		fetchRepoContents(path);
 	}
 
-	function formatSize(bytes) {
+	function formatSize(bytes: number) {
 		if (bytes === 0) return '0 Bytes';
 		const sizes = ['Bytes', 'KB', 'MB', 'GB'];
 		const i = Math.floor(Math.log(bytes) / Math.log(1024));
 		return `${(bytes / Math.pow(1024, i)).toFixed(2)} ${sizes[i]}`;
 	}
 
-	function formatDate(date) {
+	function formatDate(date: string | undefined) {
 		if (!date) return '';
 		return new Date(date).toLocaleDateString();
 	}
 
-	function getItemIcon(type) {
+	function getItemIcon(type: string) {
 		return type === 'dir' ? '📁' : '📄';
 	}
 </script>
@@ -102,12 +108,12 @@
 	{#if !data.user}
 		<div>
 			<h1>GitHub Repository Viewer</h1>
-			<button on:click={signIn} class="login-button">Login with GitHub</button>
+			<button onclick={signIn} class="login-button">Login with GitHub</button>
 		</div>
 	{:else}
 		<div class="header">
 			<h1>Repository Viewer</h1>
-			<button on:click={signOut} class="logout-button">Logout</button>
+			<button onclick={signOut} class="logout-button">Logout</button>
 		</div>
 
 		<div class="user-info">
@@ -117,7 +123,7 @@
 
 		<div class="repo-input">
 			<input bind:value={repoPath} placeholder="owner/repo-name (e.g., octocat/Hello-World)" />
-			<button on:click={() => fetchRepoContents()}>View Contents</button>
+			<button onclick={() => fetchRepoContents()}>View Contents</button>
 		</div>
 
 		{#if loading}
@@ -133,12 +139,29 @@
 		{#if contents.length}
 			<div class="repo-contents">
 				<div class="breadcrumb">
-					<span on:click={() => navigateToPath('')}>root</span>
+					<button
+						type="button"
+						class="breadcrumb-btn"
+						onclick={() => navigateToPath('')}
+						onkeydown={(e) => e.key === 'Enter' && navigateToPath('')}
+					>
+						root
+					</button>
 					{#each currentPath.split('/') as part, index}
 						{#if part}
 							<span>/</span>
-							<span
-								on:click={() =>
+							<button
+								type="button"
+								class="breadcrumb-btn"
+								onclick={() =>
+									navigateToPath(
+										currentPath
+											.split('/')
+											.slice(0, index + 1)
+											.join('/')
+									)}
+								onkeydown={(e) =>
+									e.key === 'Enter' &&
 									navigateToPath(
 										currentPath
 											.split('/')
@@ -147,11 +170,10 @@
 									)}
 							>
 								{part}
-							</span>
+							</button>
 						{/if}
 					{/each}
 				</div>
-
 				<table>
 					<thead>
 						<tr>
@@ -163,12 +185,19 @@
 					</thead>
 					<tbody>
 						{#each contents as item (item.path)}
-							<tr on:click={() => handleItemClick(item)} class="content-row">
+							<tr class="content-row">
 								<td>
-									<div class="file-name">
-										<span>{getItemIcon(item.type)}</span>
-										{item.name}
-									</div>
+									<button
+										type="button"
+										class="file-button"
+										onclick={() => handleItemClick(item)}
+										onkeydown={(e) => e.key === 'Enter' && handleItemClick(item)}
+									>
+										<div class="file-name">
+											<span>{getItemIcon(item.type)}</span>
+											{item.name}
+										</div>
+									</button>
 								</td>
 								<td>{item.type}</td>
 								<td>{formatSize(item.size)}</td>
