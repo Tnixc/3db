@@ -27,8 +27,10 @@ export const handle: Handle = async ({ event, resolve }) => {
 			console.error('Error fetching user:', error);
 			return null;
 		}
+
 		return user;
 	};
+
 	return resolve(event, {
 		filterSerializedResponseHeaders(name) {
 			return name === 'content-range';

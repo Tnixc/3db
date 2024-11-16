@@ -32,6 +32,7 @@ export const load = async ({ fetch, depends }: LoadEvent) => {
 
 	return {
 		supabase,
+		session,
 		user
 	};
 };
