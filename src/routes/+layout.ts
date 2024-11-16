@@ -12,13 +12,22 @@ export const load = async ({ fetch, depends }: LoadEvent) => {
 		serverSession: null
 	});
 
+	// First check session
 	const {
-		data: { user },
-		error
-	} = await supabase.auth.getUser();
+		data: { session }
+	} = await supabase.auth.getSession();
 
-	if (error) {
-		console.error('Error fetching user:', error);
+	let user = null;
+	if (session) {
+		const {
+			data: { user: userData },
+			error
+		} = await supabase.auth.getUser();
+		if (error) {
+			console.error('Error fetching user:', error);
+		} else {
+			user = userData;
+		}
 	}
 
 	return {
