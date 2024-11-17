@@ -40,7 +40,12 @@
 	},
 	"dependencies": {
 		"@supabase/auth-helpers-sveltekit": "^0.13.0",
-		"@supabase/supabase-js": "^2.46.1",
-		"octokit": "^4.0.2"
+		"@supabase/supabase-js": "^2.46.1"
+	},
+	"overrides": {
+		"string-width": "^4.2.3"
+	},
+	"resolutions": {
+		"string-width": "^4.2.3"
 	}
 }
