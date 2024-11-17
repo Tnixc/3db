@@ -19,9 +19,18 @@
 
 	let sidebarOpen = $state(true);
 	let githubConfig: github.GitHubConfig | null = $state(null);
-	let showCreateRepo = $state(false);
-	let showUploadDialog = $state(false);
 	let currentPath = $state('');
+
+	let createRepoDialogOpen = $state(false);
+	let uploadDialogOpen = $state(false);
+
+	function handleCreateRepoOpenChange(open: boolean) {
+		createRepoDialogOpen = open;
+	}
+
+	function handleUploadDialogOpenChange(open: boolean) {
+		uploadDialogOpen = open;
+	}
 
 	async function loadCurrentDirectory() {
 		if (!githubConfig || !$currentRepository) return;
@@ -100,6 +109,7 @@
 							{#each $repositories as repo}
 								<Sidebar.MenuItem>
 									<Sidebar.MenuButton
+										class="relative whitespace-nowrap after:absolute after:right-0 after:h-full after:w-6 after:bg-gradient-to-r after:from-transparent after:to-sidebar"
 										isActive={$currentRepository?.id === repo.id}
 										onclick={() => currentRepository.set(repo)}
 									>
@@ -118,13 +128,13 @@
 			<Sidebar.Footer>
 				<Button
 					class="w-full"
-					onclick={() => (showUploadDialog = true)}
+					onclick={() => (uploadDialogOpen = true)}
 					disabled={!$currentRepository}
 				>
 					<Icon icon="lucide:upload" class="mr-2 h-4 w-4" />
 					Upload File
 				</Button>
-				<Button variant="outline" size="sm" onclick={() => (showCreateRepo = true)}>
+				<Button variant="outline" size="sm" onclick={() => (createRepoDialogOpen = true)}>
 					<Icon icon="lucide:plus" class="mr-2 h-4 w-4" />
 					New Repository
 				</Button>
@@ -136,14 +146,14 @@
 
 			{#if githubConfig}
 				<CreateRepoDialog
-					open={showCreateRepo}
-					onOpenChange={(value) => (showCreateRepo = value)}
+					bind:open={createRepoDialogOpen}
+					onOpenChange={handleCreateRepoOpenChange}
 					config={githubConfig}
 				/>
 
 				<FileUploadDialog
-					open={showUploadDialog}
-					onOpenChange={(value) => (showUploadDialog = value)}
+					bind:open={uploadDialogOpen}
+					onOpenChange={handleUploadDialogOpenChange}
 					config={githubConfig}
 					{currentPath}
 					onUploadComplete={loadCurrentDirectory}

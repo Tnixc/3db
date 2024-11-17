@@ -4,9 +4,13 @@
 	import type { FileContent } from '$lib/types';
 	import { currentRepository } from '$lib/stores/repositories';
 	import type { GitHubConfig } from '$lib/services/github';
+	import Icon from '@iconify/svelte';
+	import { useSidebar } from '$lib/components/ui/sidebar';
 
 	let { config } = $props<{ config: GitHubConfig }>();
 
+	const sidebar = useSidebar(); 
+	
 	let currentPath = $state('');
 	let contents = $state<FileContent[]>([]);
 	let error = $state<string | null>(null);
@@ -65,9 +69,9 @@
 	}
 
 	function getBreadcrumbs() {
-		if (!currentPath) return [{ name: 'root', path: '' }];
+		if (!currentPath) return [{ name: $currentRepository?.name ?? 'root', path: '' }];
 		return [
-			{ name: 'root', path: '' },
+			{ name: $currentRepository?.name ?? 'root', path: '' },
 			...currentPath.split('/').map((part, index, arr) => ({
 				name: part,
 				path: arr.slice(0, index + 1).join('/')
@@ -88,7 +92,12 @@
 <div class="space-y-4">
 	{#if $currentRepository}
 		<div class="flex items-center justify-between">
-			<div class="flex items-center space-x-2">
+			<div class="flex items-center gap-2">
+				<Button variant="ghost" size="icon" onclick={sidebar.toggle}>
+					<Icon icon="lucide:panel-left" class="scale-[1.15]" />
+					<span class="sr-only">Toggle Sidebar</span>
+				</Button>
+
 				{#each getBreadcrumbs() as crumb}
 					<Button variant="ghost" size="sm" onclick={() => loadContents(crumb.path)}>
 						{crumb.name}
@@ -111,7 +120,7 @@
 		{:else}
 			<div class="rounded-md border">
 				<table class="w-full">
-					<thead>
+					<thead class="bg-accent">
 						<tr class="border-b">
 							<th class="p-2 text-left">Name</th>
 							<th class="p-2 text-left">Size</th>
@@ -120,31 +129,32 @@
 					</thead>
 					<tbody>
 						{#each contents as item}
-							<tr class="border-b last:border-0">
-								<td class="p-2">
-									<button
-										class="flex items-center gap-2 hover:underline"
+							<tr class="border-b last:border-0 group hover:bg-accent">
+								<td class="px-2">
+									<Button
+										variant="link"
+										class="px-0"
 										onclick={() => handleItemClick(item)}
 									>
 										{#if item.type === 'dir'}
-											📁
+											<Icon icon="lucide:folder" class="scale-[1.15]" />
 										{:else}
-											📄
+											<Icon icon="lucide:file" class="scale-[1.15]" />
 										{/if}
 										{item.name}
-									</button>
+									</Button>
 								</td>
-								<td class="p-2">
+								<td class="px-2">
 									{item.type === 'dir' ? '--' : item.size}
 								</td>
-								<td class="p-2 text-right">
+								<td class="px-2 text-right">
 									{#if item.type === 'file'}
-										<div class="flex justify-end gap-2">
+										<div class="flex justify-end gap-2 items-center">
 											<Button variant="outline" size="sm" onclick={() => handleCopyUrl(item)}>
 												Copy URL
 											</Button>
-											<Button variant="destructive" size="sm" onclick={() => handleDelete(item)}>
-												Delete
+											<Button variant="destructive" size="icon" class="group-hover:saturate-100 group-hover:opacity-100 saturate-0 opacity-50" onclick={() => handleDelete(item)}>
+												<Icon icon="lucide:trash" class="scale-[1.15]" />
 											</Button>
 										</div>
 									{/if}

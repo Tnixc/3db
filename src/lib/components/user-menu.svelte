@@ -11,7 +11,7 @@
 
 <DropdownMenu.Root>
 	<DropdownMenu.Trigger>
-		<Button size="lg" variant="ghost" class="relative h-12 w-full text-start">
+		<Button size="lg" variant="ghost" class="relative h-12 w-full py-2 pl-2 pr-2 text-start">
 			<div class="flex flex-col">
 				<p class="text-sm font-medium">{user?.user_metadata.name}</p>
 				<p class="text-xs text-muted-foreground">{user?.email}</p>
@@ -28,12 +28,12 @@
 			<p class="text-sm font-medium">{user?.user_metadata.name}</p>
 			<p class="text-xs text-muted-foreground">{user?.email}</p>
 		</div>
-		<DropdownMenu.Item onclick={() => theme.toggle()}>
+		<DropdownMenu.Item onclick={() => theme.toggle()} class="mt-1">
 			<Icon icon={$theme === 'dark' ? 'lucide:sun' : 'lucide:moon'} class="mr-2 h-4 w-4" />
 			<span>Toggle Theme</span>
 		</DropdownMenu.Item>
 		<DropdownMenu.Separator />
-		<DropdownMenu.Item onclick={onSignOut} class="text-red-600">
+		<DropdownMenu.Item onclick={onSignOut} class="bg-destructive text-destructive-foreground">
 			<Icon icon="lucide:log-out" class="mr-2 h-4 w-4" />
 			<span>Sign Out</span>
 		</DropdownMenu.Item>

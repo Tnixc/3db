@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { currentRepository } from '$lib/stores/repositories';
+	import Button from '$lib/components/ui/button/button.svelte';
 	import FileBrowser from '$lib/components/file-browser.svelte';
 	import Icon from '@iconify/svelte';
 	import type { GitHubConfig } from '$lib/services/github';
@@ -57,13 +58,10 @@
 	{#if !data.user}
 		<div class="py-8 text-center">
 			<h1 class="mb-4 text-2xl font-bold">GitHub Repository Database</h1>
-			<button
-				class="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-white hover:bg-primary/90"
-				onclick={signInWithGithub}
-			>
+			<Button onclick={signInWithGithub}>
 				<Icon icon="lucide:github" class="h-5 w-5" />
 				Login with GitHub
-			</button>
+			</Button>
 		</div>
 	{:else if !githubConfig}
 		<div class="py-8 text-center">
