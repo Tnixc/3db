@@ -2,7 +2,11 @@
 
 A UI for using GitHub repositories as a CDN/file store. Pretty flaky, but works.
 
-![Demo](https://github.com/user-attachments/assets/295e64da-fe6e-4fb4-bdf8-39a1ad6b4b1d)
+
+
+https://github.com/user-attachments/assets/29c5a822-ea87-41ea-94e0-a5555aa45c93
+
+
 
 > [!WARNING]  
 > This project is experimental and unstable. Use at your own risk and only for non-critical data.
