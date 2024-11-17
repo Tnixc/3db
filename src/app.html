@@ -4,6 +4,15 @@
 		<meta charset="utf-8" />
 		<link rel="icon" href="%sveltekit.assets%/favicon.png" />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!-- Prevent flash of wrong theme -->
+		<script>
+			let theme = localStorage.getItem('theme');
+			if (!theme) {
+				theme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+				localStorage.setItem('theme', theme);
+			}
+			document.documentElement.classList.add(theme);
+		</script>
 		%sveltekit.head%
 	</head>
 	<body data-sveltekit-preload-data="hover">

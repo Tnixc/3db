@@ -9,16 +9,18 @@
 	let {
 		open = $bindable(false),
 		config,
-		currentPath = '',
-		onUploadComplete
+		currentPath = '', // Default to empty string
+		onUploadComplete = () => {}
 	} = $props<{
 		open?: boolean;
+		onOpenChange?: (value: boolean) => void;
 		config: GitHubConfig;
 		currentPath?: string;
-		onUploadComplete: () => void;
+		onUploadComplete?: () => void;
 	}>();
 
 	let files = $state<FileList | null>(null);
+	let path = $state(currentPath);
 	let error = $state<string | null>(null);
 	let loading = $state(false);
 
@@ -41,7 +43,8 @@
 				reader.readAsText(file);
 			});
 
-			const filePath = currentPath ? `${currentPath}/${file.name}` : file.name;
+			// Combine the current path with the filename
+			const filePath = path ? `${path}/${file.name}` : file.name;
 
 			await github.createFile(
 				config,
@@ -64,7 +67,12 @@
 		if (!open) {
 			files = null;
 			error = null;
+			path = currentPath; // Reset path to current directory when dialog closes
 		}
+	});
+
+	$effect(() => {
+		path = currentPath; // Update path when currentPath prop changes
 	});
 </script>
 
@@ -86,11 +94,19 @@
 						class="mt-1"
 					/>
 				</label>
-				{#if currentPath}
-					<p class="text-sm text-muted-foreground">
-						Uploading to: /{currentPath}/
-					</p>
-				{/if}
+			</div>
+
+			<div class="space-y-2">
+				<label class="block">
+					<span class="text-sm font-medium">Path</span>
+					<Input
+						bind:value={path}
+						placeholder="Enter path (optional)"
+						disabled={loading}
+						class="mt-1"
+					/>
+				</label>
+				<p class="text-xs text-muted-foreground">Leave empty to upload to the root directory</p>
 			</div>
 
 			{#if error}

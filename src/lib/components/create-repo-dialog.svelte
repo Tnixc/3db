@@ -8,6 +8,7 @@
 
 	let { open = $bindable(false), config } = $props<{
 		open?: boolean;
+		onOpenChange?: (value: boolean) => void;
 		config: GitHubConfig;
 	}>();
 

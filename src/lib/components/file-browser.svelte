@@ -1,14 +1,11 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
 	import * as github from '$lib/services/github';
-	import type { FileContent, Repository } from '$lib/types';
+	import type { FileContent } from '$lib/types';
 	import { currentRepository } from '$lib/stores/repositories';
 	import type { GitHubConfig } from '$lib/services/github';
-	import FileUploadDialog from './file-upload-dialog.svelte';
 
 	let { config } = $props<{ config: GitHubConfig }>();
-
-	let showUploadDialog = $state(false);
 
 	let currentPath = $state('');
 	let contents = $state<FileContent[]>([]);
@@ -88,13 +85,6 @@
 	});
 </script>
 
-<FileUploadDialog
-	bind:open={showUploadDialog}
-	{config}
-	{currentPath}
-	onUploadComplete={() => loadContents(currentPath)}
-/>
-
 <div class="space-y-4">
 	{#if $currentRepository}
 		<div class="flex items-center justify-between">
@@ -108,14 +98,6 @@
 					{/if}
 				{/each}
 			</div>
-
-			<Button
-				onclick={() => {
-					/* TODO: Implement file upload */
-				}}
-			>
-				Upload File
-			</Button>
 		</div>
 
 		{#if loading}

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { currentRepository } from '$lib/stores/repositories';
 	import FileBrowser from '$lib/components/file-browser.svelte';
-	import CreateRepoDialog from '$lib/components/create-repo-dialog.svelte';
+	import Icon from '@iconify/svelte';
 	import type { GitHubConfig } from '$lib/services/github';
 
 	let { data } = $props();
@@ -58,9 +58,10 @@
 		<div class="py-8 text-center">
 			<h1 class="mb-4 text-2xl font-bold">GitHub Repository Database</h1>
 			<button
-				class="rounded-md bg-primary px-4 py-2 text-white hover:bg-primary/90"
+				class="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-white hover:bg-primary/90"
 				onclick={signInWithGithub}
 			>
+				<Icon icon="lucide:github" class="h-5 w-5" />
 				Login with GitHub
 			</button>
 		</div>
@@ -69,36 +70,10 @@
 			<p class="mb-4 text-muted-foreground">
 				Unable to access GitHub. Please try logging in again.
 			</p>
-			<button
-				class="rounded-md bg-destructive px-4 py-2 text-white hover:bg-destructive/90"
-				onclick={signOut}
-			>
-				Sign Out
-			</button>
 		</div>
 	{:else}
 		<div class="space-y-4">
-			<div class="flex items-center justify-between">
-				<h1 class="text-2xl font-bold">Repository Database</h1>
-				<div class="flex items-center gap-4">
-					<button
-						class="rounded-md bg-primary px-4 py-2 text-white hover:bg-primary/90"
-						onclick={() => (showCreateRepo = true)}
-					>
-						New Repository
-					</button>
-					<button
-						class="rounded-md bg-destructive px-4 py-2 text-white hover:bg-destructive/90"
-						onclick={signOut}
-					>
-						Sign Out
-					</button>
-				</div>
-			</div>
-
 			<FileBrowser config={githubConfig} />
-
-			<CreateRepoDialog bind:open={showCreateRepo} config={githubConfig} />
 		</div>
 	{/if}
 </div>
