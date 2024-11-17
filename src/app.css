@@ -54,7 +54,7 @@
 			--border: var(--flexoki-ui-2);
 			--input: var(--flexoki-ui-2);
 			--ring: var(--flexoki-ui-3);
-			--radius: 0.5rem;
+			--radius: 0rem;
 		}
 
 		:root {

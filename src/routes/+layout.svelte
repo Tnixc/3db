@@ -54,7 +54,7 @@
 		}
 	}
 
-	let hasGithubApp = $state<boolean | null>(null); // Change to nullable
+	let hasGithubApp = $state<boolean | null>(null);
 	let sidebarOpen = $state(true);
 	let githubConfig: github.GitHubConfig | null = $state(null);
 	let currentPath = $state('');

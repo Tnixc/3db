@@ -14,6 +14,10 @@
 			'_blank'
 		);
 	}
+
+	function openSourceRepo() {
+		window.open(`https://github.com/tnixc/3db`, '_blank');
+	}
 </script>
 
 <DropdownMenu.Root>
@@ -31,13 +35,14 @@
 		</Button>
 	</DropdownMenu.Trigger>
 	<DropdownMenu.Content class="w-60" align="end">
-		<div class="border-b px-2 py-1.5">
-			<p class="text-sm font-medium">{user?.user_metadata.name}</p>
-			<p class="text-xs text-muted-foreground">{user?.email}</p>
-		</div>
+		<DropdownMenu.Item onclick={openSourceRepo}>
+			<Icon icon="lucide:github" class="mr-2 h-4 w-4" />
+			<span>3db source code</span>
+		</DropdownMenu.Item>
+		<hr />
 		<DropdownMenu.Item onclick={openGitHubRepo}>
 			<Icon icon="lucide:github" class="mr-2 h-4 w-4" />
-			<span>Open GitHub Repos</span>
+			<span>Open My GitHub Repos</span>
 		</DropdownMenu.Item>
 		<DropdownMenu.Item onclick={() => theme.toggle()}>
 			<Icon icon={$theme === 'dark' ? 'lucide:sun' : 'lucide:moon'} class="mr-2 h-4 w-4" />

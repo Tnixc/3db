@@ -112,12 +112,13 @@
 			</div>
 			{#if existingRepo}
 				<p class="text-sm">
-					This repository already exists. Connecting it will give 3DB access to its contents.
+					This repository already exists. Connecting it will give 3db access to its contents.
+				</p>
+			{:else}
+				<p class="text-sm text-accent-foreground">
+					NOTE: This will create a public repository. Your files will be publicly accessible.
 				</p>
 			{/if}
-			<p class="text-sm text-accent-foreground">
-				NOTE: This will create a public repository. Your files will be publicly accessible.
-			</p>
 			{#if error}
 				<p class="text-sm text-destructive">{error}</p>
 			{/if}
