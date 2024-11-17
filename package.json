@@ -40,6 +40,7 @@
 	},
 	"dependencies": {
 		"@supabase/auth-helpers-sveltekit": "^0.13.0",
-		"@supabase/supabase-js": "^2.46.1"
+		"@supabase/supabase-js": "^2.46.1",
+		"octokit": "^4.0.2"
 	}
 }
