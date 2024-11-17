@@ -39,7 +39,7 @@
 			<Icon icon="lucide:github" class="mr-2 h-4 w-4" />
 			<span>3db source code</span>
 		</DropdownMenu.Item>
-		<hr class="my-1" />
+		<DropdownMenu.Separator />
 		<DropdownMenu.Item onclick={openGitHubRepo}>
 			<Icon icon="lucide:github" class="mr-2 h-4 w-4" />
 			<span>Open My GitHub Repos</span>

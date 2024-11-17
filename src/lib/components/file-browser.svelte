@@ -104,6 +104,13 @@
 </script>
 
 <div class="space-y-4">
+	{#if !$currentRepository}
+		<Button variant="ghost" size="icon" onclick={sidebar.toggle}>
+			<Icon icon="lucide:panel-left" class="scale-[1.15]" />
+			<span class="sr-only">Toggle Sidebar</span>
+		</Button>
+	{/if}
+
 	{#if $currentRepository}
 		<div class="flex items-center justify-between">
 			<div class="flex items-center gap-2">
