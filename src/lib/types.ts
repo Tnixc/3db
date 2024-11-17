@@ -27,12 +27,12 @@ export type FileContent = {
 
 export type ServiceConfig = {
 	connectedRepos: string[];
-	version: string;
+	version: number;
 };
 
 export const DEFAULT_SERVICE_CONFIG: ServiceConfig = {
 	connectedRepos: [],
-	version: '1.0.0'
+	version: 1
 };
 
 export const SERVICE_REPO_PATH = '3db-service';

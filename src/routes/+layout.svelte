@@ -54,11 +54,6 @@
 		}
 	}
 
-	$effect(() => {
-		console.log('Repositories state:', $repositories);
-		console.log('GitHub config state:', githubConfig);
-	});
-
 	let hasGithubApp = $state<boolean | null>(null); // Change to nullable
 	let sidebarOpen = $state(true);
 	let githubConfig: github.GitHubConfig | null = $state(null);
@@ -109,7 +104,15 @@
 			};
 
 			// Load repositories immediately after setting up GitHub config
-			await loadConnectedRepositories();
+			try {
+				await loadConnectedRepositories();
+			} catch (error) {
+				console.error('Error loading connected repositories:', error);
+				console.log('Attempting to create service repo...');
+				if (await github.checkRepo(githubConfig, data.username, '3db-service')) {
+					await service.initializeServiceRepo(githubConfig);
+				}
+			}
 		} catch (error) {
 			console.error('Error initializing GitHub config:', error);
 		}

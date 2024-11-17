@@ -10,6 +10,24 @@ export async function initializeServiceRepo(config: github.GitHubConfig) {
 	// If it doesn't exist, create it
 	if (!serviceRepo) {
 		serviceRepo = await github.createRepository(config, SERVICE_REPO_PATH);
+
+		// Create initial config file immediately after creating repo
+		await github.createFile(
+			config,
+			serviceRepo.owner.login,
+			serviceRepo.name,
+			SERVICE_CONFIG_FILE,
+			JSON.stringify(
+				{
+					...DEFAULT_SERVICE_CONFIG,
+					connectedRepos: [`${serviceRepo.owner.login}/${SERVICE_REPO_PATH}`]
+				},
+				null,
+				2
+			)
+		);
+
+		return serviceRepo;
 	}
 
 	// Try to get existing config
@@ -54,7 +72,14 @@ export async function initializeServiceRepo(config: github.GitHubConfig) {
 				serviceRepo.owner.login,
 				serviceRepo.name,
 				SERVICE_CONFIG_FILE,
-				JSON.stringify(DEFAULT_SERVICE_CONFIG, null, 2)
+				JSON.stringify(
+					{
+						...DEFAULT_SERVICE_CONFIG,
+						connectedRepos: [`${serviceRepo.owner.login}/${SERVICE_REPO_PATH}`]
+					},
+					null,
+					2
+				)
 			);
 		} else {
 			throw error;

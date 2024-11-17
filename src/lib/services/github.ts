@@ -43,7 +43,38 @@ export async function createRepository(config: GitHubConfig, name: string): Prom
 }
 
 export async function getRepositories(config: GitHubConfig): Promise<Repository[]> {
-	return request(config, '/user/repos?per_page=100&sort=created');
+	let allRepos: Repository[] = [];
+	let nextUrl = '/user/repos?per_page=100&sort=created';
+
+	while (nextUrl) {
+		const response = await fetch(`https://api.github.com${nextUrl}`, {
+			headers: {
+				Authorization: `token ${config.token}`,
+				Accept: 'application/vnd.github.v3+json'
+			}
+		});
+
+		if (!response.ok) {
+			throw new Error(`GitHub API error: ${response.statusText}`);
+		}
+
+		const repos = await response.json();
+		allRepos = [...allRepos, ...repos];
+
+		// Check for Link header and extract next URL
+		const linkHeader = response.headers.get('link');
+		if (!linkHeader) break;
+
+		const links = linkHeader.split(',');
+		const nextLink = links.find((link) => link.includes('rel="next"'));
+		if (!nextLink) break;
+
+		// Extract URL from next link
+		const matches = nextLink.match(/<([^>]+)>/);
+		nextUrl = matches ? matches[1].replace('https://api.github.com', '') : '';
+	}
+
+	return allRepos;
 }
 
 export async function getContents(

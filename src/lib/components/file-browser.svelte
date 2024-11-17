@@ -175,7 +175,7 @@
 										<div class="flex items-center justify-end gap-1">
 											<Button
 												variant="outline"
-												class="w-9 group-hover:bg-secondary/20"
+												class="w-9 hover:bg-secondary hover:text-secondary-foreground"
 												size="sm"
 												onclick={() => handleCopyUrl(item)}
 											>
@@ -184,7 +184,7 @@
 											<Button
 												variant="outline"
 												size="sm"
-												class="w-9 hover:bg-destructive group-hover:bg-destructive/20"
+												class="w-9 hover:bg-destructive hover:text-destructive-foreground"
 												onclick={() => handleDelete(item)}
 											>
 												<Icon icon="lucide:trash" class="scale-[1.05]" />
