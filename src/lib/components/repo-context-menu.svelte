@@ -9,6 +9,7 @@
 	import type { Snippet } from 'svelte';
 	import { serviceConfig } from '$lib/stores/service-config';
 	import { get } from 'svelte/store';
+	import { needsReload } from '$lib/stores/reload';
 
 	let { repository, config, children } = $props<{
 		repository: Repository;
@@ -43,6 +44,8 @@
 			}
 		} catch (err) {
 			console.error('Error disconnecting repository:', err);
+		} finally {
+			needsReload.set(true);
 		}
 	}
 
@@ -62,6 +65,8 @@
 			}
 		} catch (err) {
 			console.error('Error deleting repository:', err);
+		} finally {
+			needsReload.set(true);
 		}
 	}
 

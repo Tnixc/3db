@@ -15,6 +15,7 @@
 	import * as github from '$lib/services/github';
 	import * as service from '$lib/services/service';
 	import { serviceConfig } from '$lib/stores/service-config';
+	import { needsReload } from '$lib/stores/reload';
 
 	let { data, children } = $props<{
 		data: App.PageData;
@@ -204,6 +205,12 @@
 					</Sidebar.Content>
 
 					<Sidebar.Footer>
+						{#if $needsReload}
+							<div class="bg-destructive/10 p-2">
+								<Icon icon="lucide:triangle-alert" class="text-destructive" />
+								<p class="text-sm">Reload to see changes. You may need to wait a few seconds.</p>
+							</div>
+						{/if}
 						<Button
 							class="w-full"
 							onclick={() => (uploadDialogOpen = true)}

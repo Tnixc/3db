@@ -63,14 +63,19 @@
 					Login with GitHub
 				</Button>
 				<div class="py-5">
-					<h2 class="text-lg py-4">Use github as a cdn or file store</h2>
-                    <p class="text-secondary-foreground">How does it work?</p>
-                    <p class="text-muted-foreground max-w-lg">A repository called '3db-service' will be created. It houses a json file that keep tracks which repos are conencted. Internally it uses  github's api to upload and delete files/repos for you, and provides you with an interface to do so. Github strongly recommends keeping repos under 5gb.</p>
+					<h2 class="py-4 text-lg">Use github as a cdn or file store</h2>
+					<p class="text-secondary-foreground">How does it work?</p>
+					<p class="max-w-lg text-muted-foreground">
+						A repository called '3db-service' will be created. It houses a json file that keep
+						tracks which repos are conencted. Internally it uses github's api to upload and delete
+						files/repos for you, and provides you with an interface to do so. Github strongly
+						recommends keeping repos under 5gb.
+					</p>
 				</div>
 			</div>
 		{:else if !githubConfig}
 			<div class="py-8 text-center">
-				<p class="text-muted-foreground mb-4">
+				<p class="mb-4 text-muted-foreground">
 					Unable to access GitHub. Please try logging in again.
 				</p>
 			</div>

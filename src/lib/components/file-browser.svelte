@@ -4,6 +4,7 @@
 	import { formatBytes } from '$lib/utils';
 	import type { FileContent } from '$lib/types';
 	import { currentRepository } from '$lib/stores/repositories';
+	import { needsReload } from '$lib/stores/reload';
 	import type { GitHubConfig } from '$lib/services/github';
 	import Icon from '@iconify/svelte';
 	import { useSidebar } from '$lib/components/ui/sidebar';
@@ -75,6 +76,7 @@
 				item.sha
 			);
 			await loadContents(currentPath);
+			needsReload.set(true);
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to delete file';
 		}

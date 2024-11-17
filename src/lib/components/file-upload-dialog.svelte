@@ -5,6 +5,7 @@
 	import type { GitHubConfig } from '$lib/services/github';
 	import * as github from '$lib/services/github';
 	import { currentRepository } from '$lib/stores/repositories';
+	import { needsReload } from '$lib/stores/reload';
 
 	let {
 		open = $bindable(false),
@@ -61,6 +62,7 @@
 			);
 
 			onUploadComplete();
+			needsReload.set(true);
 			open = false;
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Failed to upload file';
