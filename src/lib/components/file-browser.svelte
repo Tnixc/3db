@@ -152,15 +152,17 @@
 						{#each contents.toSorted((a, b) => {
 							if (a.type === 'dir' && b.type !== 'dir') return -1;
 							if (b.type === 'dir' && a.type !== 'dir') return 1;
+							if (a.name === 'index.json' && $currentRepository?.name === '3db-service') return 1;
+							if (b.name === 'index.json' && $currentRepository?.name === '3db-service') return -1;
 							return a.name.localeCompare(b.name);
 						}) as item}
 							<tr class="border-b border-border/40 last:border-0 hover:bg-accent">
 								<td class="px-2">
 									<Button variant="link" class="group px-0" onclick={() => handleItemClick(item)}>
 										{#if item.type === 'dir'}
-											<Icon icon="lucide:folder" class="scale-[1.15]" />
+											<Icon icon="lucide:folder" class="scale-[1.1]" />
 										{:else}
-											<Icon icon="lucide:file" class="scale-[1.15]" />
+											<Icon icon="lucide:file" class="scale-[1.1] text-muted-foreground" />
 										{/if}
 										{item.name}
 										{#if item.type === 'dir'}
