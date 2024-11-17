@@ -43,14 +43,25 @@
 		if (item.type === 'dir') {
 			loadContents(item.path);
 		} else {
-			// Copy raw URL to clipboard
-			navigator.clipboard.writeText(item.download_url);
+			window.open(item.download_url, '_blank');
 		}
 	}
 
-	function handleCopyUrl(item: FileContent) {
-		navigator.clipboard.writeText(item.download_url);
-	}
+	let copiedItems = $state(new Set<string>());
+
+		function handleCopyUrl(item: FileContent) {
+			navigator.clipboard.writeText(item.download_url);
+			
+			// Add the item to copied set
+			copiedItems.add(item.path);
+
+			// Remove the item after 3 seconds
+			setTimeout(() => {
+				copiedItems.delete(item.path);
+				// Force a reactive update since we're mutating a Set
+				copiedItems = new Set(copiedItems);
+			}, 3000);
+		}
 
 	async function handleDelete(item: FileContent) {
 		if (!$currentRepository || !confirm(`Delete ${item.name}?`)) return;
@@ -129,16 +140,31 @@
 						</tr>
 					</thead>
 					<tbody>
-						{#each contents as item}
-							<tr class="group border-b border-border/40 last:border-0 hover:bg-accent">
+						{#each contents.toSorted((a, b) => {
+							if (a.type === 'dir' && b.type !== 'dir') return -1;
+							if (b.type === 'dir' && a.type !== 'dir') return 1;
+							return a.name.localeCompare(b.name);
+						}) as item}
+							<tr class="border-b border-border/40 last:border-0 hover:bg-accent">
 								<td class="px-2">
-									<Button variant="link" class="px-0" onclick={() => handleItemClick(item)}>
+									<Button variant="link" class="group px-0" onclick={() => handleItemClick(item)}>
 										{#if item.type === 'dir'}
 											<Icon icon="lucide:folder" class="scale-[1.15]" />
 										{:else}
 											<Icon icon="lucide:file" class="scale-[1.15]" />
 										{/if}
 										{item.name}
+										{#if item.type === 'dir'}
+											<Icon
+												icon="lucide:chevron-right"
+												class="-translate-x-1/2 scale-[1.15] opacity-0 transition group-hover:translate-x-0 group-hover:opacity-100"
+											/>
+										{:else}
+											<Icon
+												icon="lucide:external-link"
+												class="-translate-x-1/2 scale-[1.05] opacity-0 transition group-hover:translate-x-0 group-hover:opacity-100"
+											/>
+										{/if}
 									</Button>
 								</td>
 								<td class="px-2 text-sm">

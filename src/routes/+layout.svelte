@@ -2,7 +2,7 @@
 	import '../app.css';
 	import { theme } from '$lib/stores/theme';
 	import { PUBLIC_GITHUB_APP_NAME } from '$env/static/public';
-
+	import RepoContextMenu from '$lib/components/repo-context-menu.svelte';
 	import * as Sidebar from '$lib/components/ui/sidebar';
 	import { Button } from '$lib/components/ui/button';
 	import type { Snippet } from 'svelte';
@@ -13,12 +13,40 @@
 	import GithubAppPrompt from '$lib/components/github-app-prompt.svelte';
 	import Icon from '@iconify/svelte';
 	import * as github from '$lib/services/github';
+	import * as service from '$lib/services/service';
 
 	let { data, children } = $props<{
 		data: App.PageData;
 		children: Snippet;
 	}>();
 
+	async function loadConnectedRepositories() {
+		if (!githubConfig) return;
+
+		try {
+			// Initialize service repo if needed
+			await service.initializeServiceRepo(githubConfig);
+
+			// Get connected repos from service config
+			const serviceConfig = await service.getServiceConfig(githubConfig);
+
+			// Fetch full repo details for connected repos
+			const allRepos = await github.getRepositories(githubConfig);
+			const connectedRepos = allRepos.filter((repo) =>
+				serviceConfig.connectedRepos.includes(repo.full_name)
+			);
+
+			repositories.set(connectedRepos);
+		} catch (error) {
+			console.error('Error loading repositories:', error);
+		}
+	}
+
+	$effect(() => {
+		if (githubConfig) {
+			loadConnectedRepositories();
+		}
+	});
 	let hasGithubApp = $state<boolean | null>(null); // Change to nullable
 	let sidebarOpen = $state(true);
 	let githubConfig: github.GitHubConfig | null = $state(null);
@@ -68,22 +96,12 @@
 				userEmail: data.user.email ?? 'unknown'
 			};
 
-			await loadRepositories();
+			await loadConnectedRepositories();
 		} catch (error) {
 			console.error('Error initializing GitHub config:', error);
 		}
 	}
 
-	async function loadRepositories() {
-		if (!githubConfig) return;
-
-		try {
-			const repos = await github.getRepositories(githubConfig);
-			repositories.set(repos);
-		} catch (error) {
-			console.error('Error loading repositories:', error);
-		}
-	}
 	async function checkGithubAppInstallation() {
 		if (!data.user) return;
 
@@ -119,6 +137,11 @@
 		}
 	});
 
+	$effect(() => {
+		if (githubConfig) {
+			loadConnectedRepositories();
+		}
+	});
 	async function signOut() {
 		await data.supabase.auth.signOut();
 		window.location.reload();
@@ -145,14 +168,16 @@
 								<Sidebar.Menu>
 									{#each $repositories as repo}
 										<Sidebar.MenuItem>
-											<Sidebar.MenuButton
-												class="relative whitespace-nowrap after:absolute after:right-0 after:h-full after:w-6 after:bg-gradient-to-r after:from-transparent after:to-sidebar"
-												isActive={$currentRepository?.id === repo.id}
-												onclick={() => currentRepository.set(repo)}
-											>
-												<Icon icon="lucide:database" class="mr-2 h-4 w-4" />
-												{repo.name}
-											</Sidebar.MenuButton>
+											<RepoContextMenu repository={repo} config={githubConfig}>
+												<Sidebar.MenuButton
+													class="relative whitespace-nowrap after:absolute after:right-0 after:h-full after:w-6 after:bg-gradient-to-r after:from-transparent after:to-sidebar"
+													isActive={$currentRepository?.id === repo.id}
+													onclick={() => currentRepository.set(repo)}
+												>
+													<Icon icon="lucide:database" class="mr-2 h-4 w-4" />
+													{repo.name}
+												</Sidebar.MenuButton>
+											</RepoContextMenu>
 										</Sidebar.MenuItem>
 									{/each}
 								</Sidebar.Menu>
