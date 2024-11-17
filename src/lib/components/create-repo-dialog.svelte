@@ -8,6 +8,7 @@
 	import * as service from '$lib/services/service';
 	import type { Repository } from '$lib/types';
 	import { serviceConfig } from '$lib/stores/service-config';
+	import { get } from 'svelte/store';
 
 	let existingRepo = $state<Repository | null>(null);
 	let loading = $state(false);
@@ -42,7 +43,7 @@
 		error = null;
 
 		try {
-			let repo = existingRepo;
+			let repo: Repository | null = existingRepo;
 			const repos = await github.getRepositories(config);
 			const username = repos[0]?.owner.login;
 
@@ -54,7 +55,15 @@
 			if (!repoExists) {
 				repo = await github.createRepository(config, name.trim());
 			} else {
-				repo = repos.find((r) => r.name === name.trim());
+				const foundRepo = repos.find((r) => r.name === name.trim());
+				if (!foundRepo) {
+					throw new Error('Repository not found');
+				}
+				repo = foundRepo;
+			}
+
+			if (!repo) {
+				throw new Error('Failed to create or find repository');
 			}
 
 			// Update both remote and local config
@@ -69,7 +78,7 @@
 				serviceConfig.set(updatedConfig);
 			}
 
-			repositories.update((repos) => [...repos, repo]);
+			repositories.update((repos) => [...repos, repo as Repository]);
 			name = '';
 			open = false;
 		} catch (err) {
@@ -92,7 +101,7 @@
 <Dialog.Root bind:open>
 	<Dialog.Content class="sm:max-w-[425px]">
 		<Dialog.Header>
-			<Dialog.Title>Create Repository</Dialog.Title>
+			<Dialog.Title>Link or Create Repository</Dialog.Title>
 			<Dialog.Description>Create a new GitHub repository to use as a database.</Dialog.Description>
 		</Dialog.Header>
 
@@ -114,7 +123,7 @@
 			{/if}
 
 			<Dialog.Footer>
-				<Button variant="outline" on:click={() => (open = false)} disabled={loading}>Cancel</Button>
+				<Button variant="outline" onclick={() => (open = false)} disabled={loading}>Cancel</Button>
 				<Button type="submit" disabled={loading}>
 					{loading ? 'Creating...' : 'Create'}
 				</Button>

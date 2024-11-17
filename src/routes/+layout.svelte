@@ -211,7 +211,7 @@
 						</Button>
 						<Button variant="outline" size="sm" onclick={() => (createRepoDialogOpen = true)}>
 							<Icon icon="lucide:plus" class="mr-2 h-4 w-4" />
-							New Repository
+							Link or Create Repo
 						</Button>
 					</Sidebar.Footer>
 				</Sidebar.Root>

@@ -37,10 +37,16 @@
 			const file = files[0];
 			const reader = new FileReader();
 
-			const fileContent = await new Promise<string>((resolve, reject) => {
-				reader.onload = () => resolve(reader.result as string);
+			const fileContent = await new Promise<string | ArrayBuffer>((resolve, reject) => {
+				reader.onload = () => resolve(reader.result as string | ArrayBuffer);
 				reader.onerror = reject;
-				reader.readAsText(file);
+
+				// Use readAsText for text files, readAsArrayBuffer for binary
+				if (file.type.startsWith('text/') || file.name.match(/\.(txt|md|json|ya?ml|csv)$/i)) {
+					reader.readAsText(file);
+				} else {
+					reader.readAsArrayBuffer(file);
+				}
 			});
 
 			// Combine the current path with the filename
@@ -91,8 +97,9 @@
 						type="file"
 						onchange={(e) => (files = e.currentTarget.files)}
 						disabled={loading}
-						class="mt-1"
+						class="mt-1 bg-white text-black"
 					/>
+					<!-- FIXME: This is a hack to make the input look better -->
 				</label>
 			</div>
 

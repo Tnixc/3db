@@ -33,6 +33,8 @@
 								Read access to user profile information
 							</li>
 						</ul>
+						Note: A repo called '3db-service' will be created. It holds the metadata for which repos
+						are connected.
 					</div>
 					<Button onclick={() => (window.location.href = installationUrl)} class="w-fit">
 						<Icon icon="lucide:arrow-right" class="mr-2 h-4 w-4" />

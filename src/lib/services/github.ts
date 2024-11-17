@@ -43,7 +43,7 @@ export async function createRepository(config: GitHubConfig, name: string): Prom
 }
 
 export async function getRepositories(config: GitHubConfig): Promise<Repository[]> {
-	return request(config, '/user/repos?per_page=100&sort=updated');
+	return request(config, '/user/repos?per_page=100&sort=created');
 }
 
 export async function getContents(
@@ -55,20 +55,32 @@ export async function getContents(
 	return request(config, `/repos/${owner}/${repo}/contents/${path}`);
 }
 
+// Add utility function for base64 encoding
+function bytesToBase64(bytes: Uint8Array): string {
+	const binString = Array.from(bytes, (x) => String.fromCodePoint(x)).join('');
+	return btoa(binString);
+}
+
 export async function createFile(
 	config: GitHubConfig,
 	owner: string,
 	repo: string,
 	path: string,
-	content: string,
+	content: string | ArrayBuffer,
 	message = 'Add file via db3',
-	sha?: string // Add optional SHA parameter
+	sha?: string
 ): Promise<void> {
 	const body: any = {
 		message,
-		content: btoa(content),
 		committer: createCommitter(config.userEmail)
 	};
+
+	// Handle both text and binary content
+	if (typeof content === 'string') {
+		body.content = btoa(content); // Handle UTF-8 text properly
+	} else {
+		body.content = bytesToBase64(new Uint8Array(content));
+	}
 
 	// Only include SHA if updating an existing file
 	if (sha) {
