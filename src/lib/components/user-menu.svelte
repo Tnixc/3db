@@ -7,6 +7,13 @@
 		user: App.PageData['user'];
 		onSignOut: () => void;
 	}>();
+
+	function openGitHubRepo() {
+		window.open(
+			`https://github.com/${user?.user_metadata.user_name}?tab=repositories&type=source`,
+			'_blank'
+		);
+	}
 </script>
 
 <DropdownMenu.Root>
@@ -28,7 +35,11 @@
 			<p class="text-sm font-medium">{user?.user_metadata.name}</p>
 			<p class="text-xs text-muted-foreground">{user?.email}</p>
 		</div>
-		<DropdownMenu.Item onclick={() => theme.toggle()} class="mt-1">
+		<DropdownMenu.Item onclick={openGitHubRepo}>
+			<Icon icon="lucide:github" class="mr-2 h-4 w-4" />
+			<span>Open GitHub Repos</span>
+		</DropdownMenu.Item>
+		<DropdownMenu.Item onclick={() => theme.toggle()}>
 			<Icon icon={$theme === 'dark' ? 'lucide:sun' : 'lucide:moon'} class="mr-2 h-4 w-4" />
 			<span>Toggle Theme</span>
 		</DropdownMenu.Item>

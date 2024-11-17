@@ -49,19 +49,19 @@
 
 	let copiedItems = $state(new Set<string>());
 
-		function handleCopyUrl(item: FileContent) {
-			navigator.clipboard.writeText(item.download_url);
-			
-			// Add the item to copied set
-			copiedItems.add(item.path);
+	function handleCopyUrl(item: FileContent) {
+		navigator.clipboard.writeText(item.download_url);
 
-			// Remove the item after 3 seconds
-			setTimeout(() => {
-				copiedItems.delete(item.path);
-				// Force a reactive update since we're mutating a Set
-				copiedItems = new Set(copiedItems);
-			}, 3000);
-		}
+		// Add the item to copied set
+		copiedItems.add(item.path);
+
+		// Remove the item after 3 seconds
+		setTimeout(() => {
+			copiedItems.delete(item.path);
+			// Force a reactive update since we're mutating a Set
+			copiedItems = new Set(copiedItems);
+		}, 3000);
+	}
 
 	async function handleDelete(item: FileContent) {
 		if (!$currentRepository || !confirm(`Delete ${item.name}?`)) return;

@@ -14,6 +14,7 @@
 	import Icon from '@iconify/svelte';
 	import * as github from '$lib/services/github';
 	import * as service from '$lib/services/service';
+	import { serviceConfig } from '$lib/stores/service-config';
 
 	let { data, children } = $props<{
 		data: App.PageData;
@@ -21,32 +22,43 @@
 	}>();
 
 	async function loadConnectedRepositories() {
-		if (!githubConfig) return;
+		if (!githubConfig) {
+			console.log('No GitHub config available');
+			return;
+		}
 
 		try {
-			// Initialize service repo if needed
+			console.log('Initializing service repo...');
 			await service.initializeServiceRepo(githubConfig);
 
-			// Get connected repos from service config
-			const serviceConfig = await service.getServiceConfig(githubConfig);
+			console.log('Getting service config...');
+			const config = await service.getServiceConfig(githubConfig);
+			serviceConfig.set(config);
 
-			// Fetch full repo details for connected repos
+			console.log('Fetching repositories...');
 			const allRepos = await github.getRepositories(githubConfig);
+			console.log('All repos:', allRepos);
+
 			const connectedRepos = allRepos.filter((repo) =>
-				serviceConfig.connectedRepos.includes(repo.full_name)
+				config.connectedRepos.includes(repo.full_name)
 			);
+			console.log('Connected repos:', connectedRepos);
 
 			repositories.set(connectedRepos);
 		} catch (error) {
 			console.error('Error loading repositories:', error);
+			if (error instanceof Error) {
+				console.error('Error details:', error.message);
+				console.error('Stack trace:', error.stack);
+			}
 		}
 	}
 
 	$effect(() => {
-		if (githubConfig) {
-			loadConnectedRepositories();
-		}
+		console.log('Repositories state:', $repositories);
+		console.log('GitHub config state:', githubConfig);
 	});
+
 	let hasGithubApp = $state<boolean | null>(null); // Change to nullable
 	let sidebarOpen = $state(true);
 	let githubConfig: github.GitHubConfig | null = $state(null);
@@ -96,6 +108,7 @@
 				userEmail: data.user.email ?? 'unknown'
 			};
 
+			// Load repositories immediately after setting up GitHub config
 			await loadConnectedRepositories();
 		} catch (error) {
 			console.error('Error initializing GitHub config:', error);

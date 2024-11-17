@@ -7,6 +7,8 @@
 	import { repositories } from '$lib/stores/repositories';
 	import * as service from '$lib/services/service';
 	import type { Repository } from '$lib/types';
+	import { serviceConfig } from '$lib/stores/service-config';
+
 	let existingRepo = $state<Repository | null>(null);
 	let loading = $state(false);
 	let error = $state<string | null>(null);
@@ -41,17 +43,30 @@
 
 		try {
 			let repo = existingRepo;
+			const repos = await github.getRepositories(config);
+			const username = repos[0]?.owner.login;
 
-			// Only create new repo if it doesn't exist
-			if (!repo) {
-				repo = await github.createRepository(config, name.trim());
+			if (!username) {
+				throw new Error('Could not determine GitHub username');
 			}
 
-			// Update service config
-			const serviceConfig = await service.getServiceConfig(config);
-			if (!serviceConfig.connectedRepos.includes(repo.full_name)) {
-				serviceConfig.connectedRepos.push(repo.full_name);
-				await service.updateServiceConfig(config, serviceConfig);
+			const repoExists = await github.checkRepo(config, username, name.trim());
+			if (!repoExists) {
+				repo = await github.createRepository(config, name.trim());
+			} else {
+				repo = repos.find((r) => r.name === name.trim());
+			}
+
+			// Update both remote and local config
+			const currentConfig = get(serviceConfig);
+			if (!currentConfig.connectedRepos.includes(repo.full_name)) {
+				const updatedConfig = {
+					...currentConfig,
+					connectedRepos: [...currentConfig.connectedRepos, repo.full_name]
+				};
+
+				await service.updateServiceConfig(config, updatedConfig);
+				serviceConfig.set(updatedConfig);
 			}
 
 			repositories.update((repos) => [...repos, repo]);
@@ -92,14 +107,14 @@
 				</p>
 			{/if}
 			<p class="text-sm text-accent-foreground">
-				NOTE: This will create a public repository. You files will be publicly accessible.
+				NOTE: This will create a public repository. Your files will be publicly accessible.
 			</p>
 			{#if error}
 				<p class="text-sm text-destructive">{error}</p>
 			{/if}
 
 			<Dialog.Footer>
-				<Button variant="outline" onclick={() => (open = false)} disabled={loading}>Cancel</Button>
+				<Button variant="outline" on:click={() => (open = false)} disabled={loading}>Cancel</Button>
 				<Button type="submit" disabled={loading}>
 					{loading ? 'Creating...' : 'Create'}
 				</Button>
