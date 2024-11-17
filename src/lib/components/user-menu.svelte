@@ -23,7 +23,7 @@
 			/>
 		</Button>
 	</DropdownMenu.Trigger>
-	<DropdownMenu.Content class="w-56" align="end">
+	<DropdownMenu.Content class="w-60" align="end">
 		<div class="border-b px-2 py-1.5">
 			<p class="text-sm font-medium">{user?.user_metadata.name}</p>
 			<p class="text-xs text-muted-foreground">{user?.email}</p>
@@ -33,7 +33,7 @@
 			<span>Toggle Theme</span>
 		</DropdownMenu.Item>
 		<DropdownMenu.Separator />
-		<DropdownMenu.Item onclick={onSignOut} class="bg-destructive text-destructive-foreground">
+		<DropdownMenu.Item onclick={onSignOut} class="bg-destructive/20 text-destructive-foreground">
 			<Icon icon="lucide:log-out" class="mr-2 h-4 w-4" />
 			<span>Sign Out</span>
 		</DropdownMenu.Item>

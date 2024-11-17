@@ -130,7 +130,7 @@
 					</thead>
 					<tbody>
 						{#each contents as item}
-							<tr class="group border-b last:border-0 hover:bg-accent">
+							<tr class="group border-b border-border/40 last:border-0 hover:bg-accent">
 								<td class="px-2">
 									<Button variant="link" class="px-0" onclick={() => handleItemClick(item)}>
 										{#if item.type === 'dir'}
@@ -149,16 +149,16 @@
 										<div class="flex items-center justify-end gap-2">
 											<Button
 												variant="outline"
-												class="w-9"
+												class="w-9 group-hover:bg-secondary/20"
 												size="sm"
 												onclick={() => handleCopyUrl(item)}
 											>
 												<Icon icon="lucide:copy" class="scale-[1.05]" />
 											</Button>
 											<Button
-												variant="destructive"
+												variant="outline"
 												size="sm"
-												class="w-9 opacity-50 ring-inset ring-red-400/40 saturate-0 transition hover:ring-1 group-hover:opacity-100 group-hover:saturate-100"
+												class="w-9 group-hover:bg-destructive/80"
 												onclick={() => handleDelete(item)}
 											>
 												<Icon icon="lucide:trash" class="scale-[1.05]" />

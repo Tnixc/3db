@@ -14,7 +14,7 @@
 			provider: 'github',
 			options: {
 				// Request necessary GitHub scopes for repository management
-				scopes: 'repo delete_repo',
+				scopes: 'repo administration',
 				redirectTo: `${window.location.origin}/auth/callback`
 			}
 		});

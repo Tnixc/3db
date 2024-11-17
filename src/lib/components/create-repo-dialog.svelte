@@ -13,7 +13,6 @@
 	}>();
 
 	let name = $state('');
-	let isPrivate = $state(true);
 	let error = $state<string | null>(null);
 	let loading = $state(false);
 
@@ -27,7 +26,7 @@
 		error = null;
 
 		try {
-			const newRepo = await github.createRepository(config, name.trim(), isPrivate);
+			const newRepo = await github.createRepository(config, name.trim(), false); // not private
 			repositories.update((repos) => [...repos, newRepo]);
 			name = '';
 			open = false;
@@ -58,18 +57,9 @@
 				<label for="name" class="text-sm font-medium">Repository Name</label>
 				<Input id="name" bind:value={name} placeholder="my-database" disabled={loading} />
 			</div>
-
-			<div class="flex items-center space-x-2">
-				<input
-					type="checkbox"
-					id="private"
-					bind:checked={isPrivate}
-					disabled={loading}
-					class="h-4 w-4 rounded border-gray-300"
-				/>
-				<label for="private" class="text-sm font-medium">Private repository</label>
-			</div>
-
+			<p class="text-sm text-accent-foreground">
+				NOTE: This will create a public repository. You files will be publicly accessible.
+			</p>
 			{#if error}
 				<p class="text-sm text-destructive">{error}</p>
 			{/if}
