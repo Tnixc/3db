@@ -18,10 +18,12 @@
 		data: App.PageData;
 		children: Snippet;
 	}>();
-	let hasGithubApp = $state(false);
+
+	let hasGithubApp = $state<boolean | null>(null); // Change to nullable
 	let sidebarOpen = $state(true);
 	let githubConfig: github.GitHubConfig | null = $state(null);
 	let currentPath = $state('');
+	let isLoading = $state(true); // Add loading state
 
 	let createRepoDialogOpen = $state(false);
 	let uploadDialogOpen = $state(false);
@@ -86,7 +88,6 @@
 		if (!data.user) return;
 
 		try {
-			// Make an API call to check if the user has installed the app
 			const response = await fetch('/api/github/check-installation', {
 				headers: {
 					'Content-Type': 'application/json'
@@ -97,14 +98,20 @@
 			hasGithubApp = installed;
 		} catch (error) {
 			console.error('Error checking GitHub app installation:', error);
+			hasGithubApp = false;
+		} finally {
+			isLoading = false;
 		}
 	}
 
 	$effect(() => {
 		if (data.user) {
 			checkGithubAppInstallation();
+		} else {
+			isLoading = false;
 		}
 	});
+
 	$effect(() => {
 		theme.set($theme);
 		if (data.user) {
@@ -118,79 +125,81 @@
 	}
 </script>
 
-{#if data.user}
-	{#if !hasGithubApp}
-		<GithubAppPrompt
-			installationUrl={`https://github.com/apps/${PUBLIC_GITHUB_APP_NAME}/installations/new`}
-		/>
-	{:else}
-		<Sidebar.Provider bind:open={sidebarOpen}>
-			<Sidebar.Root>
-				<Sidebar.Header>
-					<UserMenu user={data.user} onSignOut={signOut} />
-				</Sidebar.Header>
+{#if !isLoading}
+	{#if data.user}
+		{#if !hasGithubApp}
+			<GithubAppPrompt
+				installationUrl={`https://github.com/apps/${PUBLIC_GITHUB_APP_NAME}/installations/new`}
+			/>
+		{:else}
+			<Sidebar.Provider bind:open={sidebarOpen}>
+				<Sidebar.Root>
+					<Sidebar.Header>
+						<UserMenu user={data.user} onSignOut={signOut} />
+					</Sidebar.Header>
 
-				<Sidebar.Content>
+					<Sidebar.Content>
+						{#if githubConfig}
+							<Sidebar.Group>
+								<Sidebar.GroupLabel>Repositories</Sidebar.GroupLabel>
+								<Sidebar.Menu>
+									{#each $repositories as repo}
+										<Sidebar.MenuItem>
+											<Sidebar.MenuButton
+												class="relative whitespace-nowrap after:absolute after:right-0 after:h-full after:w-6 after:bg-gradient-to-r after:from-transparent after:to-sidebar"
+												isActive={$currentRepository?.id === repo.id}
+												onclick={() => currentRepository.set(repo)}
+											>
+												<Icon icon="lucide:database" class="mr-2 h-4 w-4" />
+												{repo.name}
+											</Sidebar.MenuButton>
+										</Sidebar.MenuItem>
+									{/each}
+								</Sidebar.Menu>
+							</Sidebar.Group>
+						{:else}
+							<div class="p-4 text-sm text-muted-foreground">Loading repositories...</div>
+						{/if}
+					</Sidebar.Content>
+
+					<Sidebar.Footer>
+						<Button
+							class="w-full"
+							onclick={() => (uploadDialogOpen = true)}
+							disabled={!$currentRepository}
+						>
+							<Icon icon="lucide:upload" class="mr-2 h-4 w-4" />
+							Upload File
+						</Button>
+						<Button variant="outline" size="sm" onclick={() => (createRepoDialogOpen = true)}>
+							<Icon icon="lucide:plus" class="mr-2 h-4 w-4" />
+							New Repository
+						</Button>
+					</Sidebar.Footer>
+				</Sidebar.Root>
+
+				<Sidebar.Inset>
+					{@render children()}
+
 					{#if githubConfig}
-						<Sidebar.Group>
-							<Sidebar.GroupLabel>Repositories</Sidebar.GroupLabel>
-							<Sidebar.Menu>
-								{#each $repositories as repo}
-									<Sidebar.MenuItem>
-										<Sidebar.MenuButton
-											class="relative whitespace-nowrap after:absolute after:right-0 after:h-full after:w-6 after:bg-gradient-to-r after:from-transparent after:to-sidebar"
-											isActive={$currentRepository?.id === repo.id}
-											onclick={() => currentRepository.set(repo)}
-										>
-											<Icon icon="lucide:database" class="mr-2 h-4 w-4" />
-											{repo.name}
-										</Sidebar.MenuButton>
-									</Sidebar.MenuItem>
-								{/each}
-							</Sidebar.Menu>
-						</Sidebar.Group>
-					{:else}
-						<div class="p-4 text-sm text-muted-foreground">Loading repositories...</div>
+						<CreateRepoDialog
+							bind:open={createRepoDialogOpen}
+							onOpenChange={handleCreateRepoOpenChange}
+							config={githubConfig}
+						/>
+
+						<FileUploadDialog
+							bind:open={uploadDialogOpen}
+							onOpenChange={handleUploadDialogOpenChange}
+							config={githubConfig}
+							{currentPath}
+							onUploadComplete={loadCurrentDirectory}
+						/>
 					{/if}
-				</Sidebar.Content>
-
-				<Sidebar.Footer>
-					<Button
-						class="w-full"
-						onclick={() => (uploadDialogOpen = true)}
-						disabled={!$currentRepository}
-					>
-						<Icon icon="lucide:upload" class="mr-2 h-4 w-4" />
-						Upload File
-					</Button>
-					<Button variant="outline" size="sm" onclick={() => (createRepoDialogOpen = true)}>
-						<Icon icon="lucide:plus" class="mr-2 h-4 w-4" />
-						New Repository
-					</Button>
-				</Sidebar.Footer>
-			</Sidebar.Root>
-
-			<Sidebar.Inset>
-				{@render children()}
-
-				{#if githubConfig}
-					<CreateRepoDialog
-						bind:open={createRepoDialogOpen}
-						onOpenChange={handleCreateRepoOpenChange}
-						config={githubConfig}
-					/>
-
-					<FileUploadDialog
-						bind:open={uploadDialogOpen}
-						onOpenChange={handleUploadDialogOpenChange}
-						config={githubConfig}
-						{currentPath}
-						onUploadComplete={loadCurrentDirectory}
-					/>
-				{/if}
-			</Sidebar.Inset>
-		</Sidebar.Provider>
+				</Sidebar.Inset>
+			</Sidebar.Provider>
+		{/if}
+	{:else}
+		{@render children()}
 	{/if}
-{:else}
-	{@render children()}
 {/if}

@@ -33,7 +33,7 @@
 			<span>Toggle Theme</span>
 		</DropdownMenu.Item>
 		<DropdownMenu.Separator />
-		<DropdownMenu.Item onclick={onSignOut} class="bg-destructive/20 text-destructive-foreground">
+		<DropdownMenu.Item onclick={onSignOut} class="bg-destructive/20 text-primary">
 			<Icon icon="lucide:log-out" class="mr-2 h-4 w-4" />
 			<span>Sign Out</span>
 		</DropdownMenu.Item>

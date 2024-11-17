@@ -6,8 +6,8 @@
 	import type { GitHubConfig } from '$lib/services/github';
 
 	let { data } = $props();
-	let showCreateRepo = $state(false);
 	let githubConfig = $state<GitHubConfig | null>(null);
+	let isLoading = $state(true);
 
 	async function signInWithGithub() {
 		const { error } = await data.supabase.auth.signInWithOAuth({
@@ -19,11 +19,6 @@
 			}
 		});
 		if (error) console.error('Auth error:', error);
-	}
-
-	async function signOut() {
-		await data.supabase.auth.signOut();
-		window.location.reload();
 	}
 
 	async function initGitHubConfig() {
@@ -44,34 +39,40 @@
 			};
 		} catch (error) {
 			console.error('Error initializing GitHub config:', error);
+		} finally {
+			isLoading = false;
 		}
 	}
 
 	$effect(() => {
 		if (data.user) {
 			initGitHubConfig();
+		} else {
+			isLoading = false;
 		}
 	});
 </script>
 
 <div class="container mx-auto p-4">
-	{#if !data.user}
-		<div class="py-8 text-center">
-			<h1 class="mb-4 text-2xl font-bold">GitHub Repository Database</h1>
-			<Button onclick={signInWithGithub}>
-				<Icon icon="lucide:github" class="h-5 w-5" />
-				Login with GitHub
-			</Button>
-		</div>
-	{:else if !githubConfig}
-		<div class="py-8 text-center">
-			<p class="mb-4 text-muted-foreground">
-				Unable to access GitHub. Please try logging in again.
-			</p>
-		</div>
-	{:else}
-		<div class="space-y-4">
-			<FileBrowser config={githubConfig} />
-		</div>
+	{#if !isLoading}
+		{#if !data.user}
+			<div class="py-8 text-center">
+				<h1 class="mb-4 text-2xl font-bold">GitHub Repository Database</h1>
+				<Button onclick={signInWithGithub}>
+					<Icon icon="lucide:github" class="h-5 w-5" />
+					Login with GitHub
+				</Button>
+			</div>
+		{:else if !githubConfig}
+			<div class="py-8 text-center">
+				<p class="mb-4 text-muted-foreground">
+					Unable to access GitHub. Please try logging in again.
+				</p>
+			</div>
+		{:else}
+			<div class="space-y-4">
+				<FileBrowser config={githubConfig} />
+			</div>
+		{/if}
 	{/if}
 </div>

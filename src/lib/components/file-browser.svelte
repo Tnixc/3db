@@ -141,12 +141,12 @@
 										{item.name}
 									</Button>
 								</td>
-								<td class="px-2">
+								<td class="px-2 text-sm">
 									{item.type === 'dir' ? '--' : formatBytes(item.size)}
 								</td>
-								<td class="px-2 text-right">
+								<td class="px-2 pr-[3.5px] text-right">
 									{#if item.type === 'file'}
-										<div class="flex items-center justify-end gap-2">
+										<div class="flex items-center justify-end gap-1">
 											<Button
 												variant="outline"
 												class="w-9 group-hover:bg-secondary/20"
@@ -158,7 +158,7 @@
 											<Button
 												variant="outline"
 												size="sm"
-												class="w-9 group-hover:bg-destructive/80"
+												class="w-9 hover:bg-destructive group-hover:bg-destructive/20"
 												onclick={() => handleDelete(item)}
 											>
 												<Icon icon="lucide:trash" class="scale-[1.05]" />
