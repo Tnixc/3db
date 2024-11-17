@@ -65,9 +65,18 @@
 	}
 }
 
+@font-face {
+	font-family: BasierSquareMono;
+	font-style: normal;
+	font-weight: 400;
+	font-display: swap;
+	src: url(/BasierSquareMono.woff2) format("woff2");
+}
+
 @layer base {
 	* {
 		@apply border-border;
+		font-family: "BasierSquareMono", monospace;
 	}
 
 	body {
