@@ -63,20 +63,36 @@
 	}
 
 	async function handleDelete(item: FileContent) {
-		if (!$currentRepository || !confirm(`Delete ${item.name}?`)) return;
+		if (
+			!$currentRepository ||
+			!confirm(`Delete ${item.type === 'dir' ? 'folder' : 'file'}: ${item.name}?`)
+		)
+			return;
 
 		try {
-			await github.deleteFile(
-				config,
-				$currentRepository.owner.login,
-				$currentRepository.name,
-				item.path,
-				item.sha
-			);
+			if (item.type === 'dir') {
+				await github.deleteFolder(
+					config,
+					$currentRepository.owner.login,
+					$currentRepository.name,
+					item.path
+				);
+			} else {
+				await github.deleteFile(
+					config,
+					$currentRepository.owner.login,
+					$currentRepository.name,
+					item.path,
+					item.sha
+				);
+			}
 			await loadContents(currentPath);
 			needsReload.set(true);
 		} catch (err) {
-			error = err instanceof Error ? err.message : 'Failed to delete file';
+			error =
+				err instanceof Error
+					? err.message
+					: `Failed to delete ${item.type === 'dir' ? 'folder' : 'file'}`;
 		}
 	}
 
@@ -180,19 +196,21 @@
 									{item.type === 'dir' ? '--' : formatBytes(item.size)}
 								</td>
 								<td class="px-2 pr-[3.5px] text-right">
-									{#if item.type === 'file'}
+									{#if item.type === 'file' || item.type === 'dir'}
 										<div class="flex items-center justify-end gap-1">
-											<Button
-												variant="outline"
-												class="w-9 hover:bg-secondary hover:text-secondary-foreground"
-												size="sm"
-												onclick={() => handleCopyUrl(item)}
-											>
-												<Icon
-													icon={copiedItems.includes(item.path) ? 'lucide:check' : 'lucide:copy'}
-													class="scale-[1.05]"
-												/>
-											</Button>
+											{#if item.type === 'file'}
+												<Button
+													variant="outline"
+													class="w-9 hover:bg-secondary hover:text-secondary-foreground"
+													size="sm"
+													onclick={() => handleCopyUrl(item)}
+												>
+													<Icon
+														icon={copiedItems.includes(item.path) ? 'lucide:check' : 'lucide:copy'}
+														class="scale-[1.05]"
+													/>
+												</Button>
+											{/if}
 											<Button
 												variant="outline"
 												size="sm"

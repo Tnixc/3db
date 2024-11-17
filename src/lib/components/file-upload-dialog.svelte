@@ -116,7 +116,7 @@
 						disabled={loading}
 						class="mt-1 bg-white text-black"
 					/>
-					<!-- FIXME: This is a hack to make the input look better -->
+					<p class="text-xs text-muted-foreground">Leave empty to upload to the root directory</p>
 				</label>
 			</div>
 

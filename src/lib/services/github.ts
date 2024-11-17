@@ -164,3 +164,21 @@ export async function checkRepo(
 		return false;
 	}
 }
+
+export async function deleteFolder(
+	config: GitHubConfig,
+	owner: string,
+	repo: string,
+	path: string
+): Promise<void> {
+	const contents = await getContents(config, owner, repo, path);
+
+	// Recursively delete all contents
+	for (const item of contents) {
+		if (item.type === 'dir') {
+			await deleteFolder(config, owner, repo, item.path);
+		} else {
+			await deleteFile(config, owner, repo, item.path, item.sha);
+		}
+	}
+}
