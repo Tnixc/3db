@@ -51,7 +51,7 @@
 			});
 
 			// Combine the current path with the filename
-			const filePath = path ? `${path}/${file.name}` : file.name;
+			const filePath = path ?? file.name;
 
 			await github.createFile(
 				config,
