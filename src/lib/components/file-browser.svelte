@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
 	import * as github from '$lib/services/github';
+	import { formatBytes } from '$lib/utils';
 	import type { FileContent } from '$lib/types';
 	import { currentRepository } from '$lib/stores/repositories';
 	import type { GitHubConfig } from '$lib/services/github';
@@ -9,8 +10,8 @@
 
 	let { config } = $props<{ config: GitHubConfig }>();
 
-	const sidebar = useSidebar(); 
-	
+	const sidebar = useSidebar();
+
 	let currentPath = $state('');
 	let contents = $state<FileContent[]>([]);
 	let error = $state<string | null>(null);
@@ -120,7 +121,7 @@
 		{:else}
 			<div class="rounded-md border">
 				<table class="w-full">
-					<thead class="bg-accent">
+					<thead class="bg-accent/50">
 						<tr class="border-b">
 							<th class="p-2 text-left">Name</th>
 							<th class="p-2 text-left">Size</th>
@@ -129,13 +130,9 @@
 					</thead>
 					<tbody>
 						{#each contents as item}
-							<tr class="border-b last:border-0 group hover:bg-accent">
+							<tr class="group border-b last:border-0 hover:bg-accent">
 								<td class="px-2">
-									<Button
-										variant="link"
-										class="px-0"
-										onclick={() => handleItemClick(item)}
-									>
+									<Button variant="link" class="px-0" onclick={() => handleItemClick(item)}>
 										{#if item.type === 'dir'}
 											<Icon icon="lucide:folder" class="scale-[1.15]" />
 										{:else}
@@ -145,16 +142,26 @@
 									</Button>
 								</td>
 								<td class="px-2">
-									{item.type === 'dir' ? '--' : item.size}
+									{item.type === 'dir' ? '--' : formatBytes(item.size)}
 								</td>
 								<td class="px-2 text-right">
 									{#if item.type === 'file'}
-										<div class="flex justify-end gap-2 items-center">
-											<Button variant="outline" size="sm" onclick={() => handleCopyUrl(item)}>
-												Copy URL
+										<div class="flex items-center justify-end gap-2">
+											<Button
+												variant="outline"
+												class="w-9"
+												size="sm"
+												onclick={() => handleCopyUrl(item)}
+											>
+												<Icon icon="lucide:copy" class="scale-[1.05]" />
 											</Button>
-											<Button variant="destructive" size="icon" class="group-hover:saturate-100 group-hover:opacity-100 saturate-0 opacity-50" onclick={() => handleDelete(item)}>
-												<Icon icon="lucide:trash" class="scale-[1.15]" />
+											<Button
+												variant="destructive"
+												size="sm"
+												class="w-9 opacity-50 ring-inset ring-red-400/40 saturate-0 transition hover:ring-1 group-hover:opacity-100 group-hover:saturate-100"
+												onclick={() => handleDelete(item)}
+											>
+												<Icon icon="lucide:trash" class="scale-[1.05]" />
 											</Button>
 										</div>
 									{/if}
