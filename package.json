@@ -40,7 +40,8 @@
 	},
 	"dependencies": {
 		"@supabase/auth-helpers-sveltekit": "^0.13.0",
-		"@supabase/supabase-js": "^2.46.1"
+		"@supabase/supabase-js": "^2.46.1",
+		"@sveltejs/adapter-vercel": "^5.4.7"
 	},
 	"overrides": {
 		"string-width": "^4.2.3"
