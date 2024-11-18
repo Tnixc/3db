@@ -62,6 +62,18 @@
 		}, 1000);
 	}
 
+	function handleDownload(item: FileContent) {
+		fetch(item.download_url)
+			.then((response) => response.blob())
+			.then((blob) => {
+				const link = document.createElement('a');
+				link.href = URL.createObjectURL(blob);
+				link.download = item.name;
+				link.click();
+			})
+			.catch(console.error);
+	}
+
 	async function handleDelete(item: FileContent) {
 		if (
 			!$currentRepository ||
@@ -182,12 +194,12 @@
 										{#if item.type === 'dir'}
 											<Icon
 												icon="lucide:chevron-right"
-												class="-translate-x-1/2 scale-[1.15] opacity-0 transition group-hover:translate-x-0 group-hover:opacity-100"
+												class="-translate-x-1/2 scale-[1.1] opacity-0 transition group-hover:translate-x-0 group-hover:opacity-100"
 											/>
 										{:else}
 											<Icon
 												icon="lucide:external-link"
-												class="-translate-x-1/2 scale-[1.05] opacity-0 transition group-hover:translate-x-0 group-hover:opacity-100"
+												class="-translate-x-1/2 opacity-0 transition group-hover:translate-x-0 group-hover:opacity-50"
 											/>
 										{/if}
 									</Button>
@@ -203,11 +215,18 @@
 													variant="outline"
 													class="w-9 hover:bg-secondary hover:text-secondary-foreground"
 													size="sm"
+													onclick={() => handleDownload(item)}
+												>
+													<Icon icon="lucide:download" class="scale-[1.05]" />
+												</Button>
+												<Button
+													variant="outline"
+													class="w-9 hover:bg-secondary hover:text-secondary-foreground"
+													size="sm"
 													onclick={() => handleCopyUrl(item)}
 												>
 													<Icon
 														icon={copiedItems.includes(item.path) ? 'lucide:check' : 'lucide:copy'}
-														class="scale-[1.05]"
 													/>
 												</Button>
 											{/if}
@@ -217,7 +236,7 @@
 												class="w-9 hover:bg-destructive hover:text-destructive-foreground"
 												onclick={() => handleDelete(item)}
 											>
-												<Icon icon="lucide:trash" class="scale-[1.05]" />
+												<Icon icon="lucide:trash" />
 											</Button>
 										</div>
 									{/if}
