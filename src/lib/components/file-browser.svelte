@@ -9,13 +9,13 @@
 	import { createSvelteTable, FlexRender } from '$lib/components/ui/data-table/index.js';
 	import * as Table from '$lib/components/ui/table/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
-	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 	import Icon from '@iconify/svelte';
 	import { createRawSnippet } from 'svelte';
 	import { renderSnippet, renderComponent } from '$lib/components/ui/data-table/index.js';
 	import { currentRepository } from '$lib/stores/repositories';
 	import { authStore } from '$lib/stores/auth';
 	import { getContents, deleteFile, deleteFolder, createFile } from '$lib/services/github';
+	import FileActionsMenu from './file-actions-menu.svelte';
 
 	let {
 		currentPath = $bindable(''),
@@ -235,61 +235,13 @@
 			id: 'actions',
 			cell: ({ row }) => {
 				const file = row.original;
-				return renderComponent(
-					DropdownMenu.Root,
-					{},
-					{
-						default: () => [
-							renderComponent(
-								DropdownMenu.Trigger,
-								{},
-								{
-									child: ({ props }: any) =>
-										renderComponent(Button, {
-											...props,
-											variant: 'ghost',
-											size: 'icon',
-											class: 'size-8',
-											children: renderComponent(Icon, { icon: 'lucide:more-horizontal' })
-										})
-								}
-							),
-							renderComponent(
-								DropdownMenu.Content,
-								{ align: 'end' },
-								{
-									default: () => [
-										file.type === 'file'
-											? renderComponent(DropdownMenu.Item, {
-													onclick: () => copyLink(file),
-													children: 'Copy Link'
-												})
-											: null,
-										file.type === 'file'
-											? renderComponent(DropdownMenu.Item, {
-													onclick: () => copyContents(file),
-													children: 'Copy Contents'
-												})
-											: null,
-										file.type === 'file' || file.type === 'dir'
-											? renderComponent(DropdownMenu.Separator, {})
-											: null,
-										renderComponent(DropdownMenu.Item, {
-											onclick: () => handleRename(file),
-											children: 'Rename'
-										}),
-										renderComponent(DropdownMenu.Separator, {}),
-										renderComponent(DropdownMenu.Item, {
-											onclick: () => handleDelete(file),
-											class: 'text-destructive',
-											children: 'Delete'
-										})
-									].filter(Boolean)
-								}
-							)
-						]
-					}
-				);
+				return renderComponent(FileActionsMenu, {
+					file,
+					onCopyLink: copyLink,
+					onCopyContents: copyContents,
+					onRename: handleRename,
+					onDelete: handleDelete
+				});
 			}
 		}
 	];
