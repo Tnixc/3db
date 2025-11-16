@@ -48,7 +48,41 @@
 				$currentRepository.name,
 				currentPath
 			);
-			files = contents;
+
+			// Normalize to array (GitHub returns object for single file, array for directory)
+			const contentsArray = Array.isArray(contents) ? contents : [contents];
+
+			// Fetch last modified dates
+			const contentsWithDates = await Promise.all(
+				contentsArray.map(async (item) => {
+					try {
+						const response = await fetch(
+							`https://api.github.com/repos/${$currentRepository.owner.login}/${$currentRepository.name}/commits?path=${encodeURIComponent(item.path)}&page=1&per_page=1&_=${Date.now()}`,
+							{
+								headers: {
+									Authorization: `Bearer ${$authStore.token}`,
+									Accept: 'application/vnd.github.v3+json'
+								},
+								cache: 'no-store'
+							}
+						);
+						if (response.ok) {
+							const commits = await response.json();
+							if (commits && commits.length > 0) {
+								return {
+									...item,
+									last_modified: commits[0].commit.committer.date
+								};
+							}
+						}
+					} catch (err) {
+						console.warn(`Failed to fetch commit date for ${item.path}:`, err);
+					}
+					return item;
+				})
+			);
+
+			files = contentsWithDates;
 		} catch (err) {
 			console.error('Failed to load files:', err);
 			error = 'Failed to load files';

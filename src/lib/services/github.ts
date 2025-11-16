@@ -108,34 +108,8 @@ export async function getContents(
 	owner: string,
 	repo: string,
 	path = ''
-): Promise<FileContent[]> {
-	const contents = await request(config, `/repos/${owner}/${repo}/contents/${path}`);
-
-	// GitHub API returns a single object for files, array for directories
-	const contentsArray = Array.isArray(contents) ? contents : [contents];
-
-	// Fetch last commit for each file to get last modified date
-	const contentsWithDates = await Promise.all(
-		contentsArray.map(async (item: FileContent) => {
-			try {
-				const commits = await request(
-					config,
-					`/repos/${owner}/${repo}/commits?path=${encodeURIComponent(item.path)}&page=1&per_page=1`
-				);
-				if (commits && commits.length > 0) {
-					return {
-						...item,
-						last_modified: commits[0].commit.committer.date
-					};
-				}
-			} catch (err) {
-				console.warn(`Failed to fetch commit date for ${item.path}:`, err);
-			}
-			return item;
-		})
-	);
-
-	return contentsWithDates;
+): Promise<FileContent[] | FileContent> {
+	return request(config, `/repos/${owner}/${repo}/contents/${path}`);
 }
 
 // Add utility function for base64 encoding
