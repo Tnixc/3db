@@ -15,7 +15,7 @@
 	import { renderSnippet, renderComponent } from '$lib/components/ui/data-table/index.js';
 	import { currentRepository } from '$lib/stores/repositories';
 	import { authStore } from '$lib/stores/auth';
-	import { getContents, deleteFile, deleteFolder } from '$lib/services/github';
+	import { getContents, deleteFile, deleteFolder, createFile } from '$lib/services/github';
 
 	let {
 		currentPath = $bindable(''),
@@ -111,6 +111,88 @@
 		}
 	}
 
+	async function copyContents(file: FileContent) {
+		if (!$currentRepository || $authStore.status !== 'ready' || file.type !== 'file') return;
+
+		try {
+			const config = { token: $authStore.token, userEmail: $authStore.user.email };
+			const contents = await getContents(
+				config,
+				$currentRepository.owner.login,
+				$currentRepository.name,
+				file.path
+			);
+
+			if (Array.isArray(contents)) return; // Shouldn't happen for a file
+
+			const fileData = contents as FileContent;
+			// Decode base64 content
+			const content = fileData.content ? atob(fileData.content) : '';
+			await navigator.clipboard.writeText(content);
+		} catch (err) {
+			console.error('Failed to copy contents:', err);
+			alert('Failed to copy file contents');
+		}
+	}
+
+	async function handleRename(file: FileContent) {
+		if (!$currentRepository || $authStore.status !== 'ready') return;
+
+		const newName = prompt(`Rename ${file.name} to:`, file.name);
+		if (!newName || newName === file.name) return;
+
+		try {
+			const config = { token: $authStore.token, userEmail: $authStore.user.email };
+
+			if (file.type === 'file') {
+				// Get current file content
+				const contents = await getContents(
+					config,
+					$currentRepository.owner.login,
+					$currentRepository.name,
+					file.path
+				);
+
+				if (Array.isArray(contents)) return; // Shouldn't happen for a file
+
+				const fileData = contents as FileContent;
+
+				// Create new file with same content
+				const pathParts = file.path.split('/');
+				pathParts[pathParts.length - 1] = newName;
+				const newPath = pathParts.join('/');
+
+				// Decode and re-encode content
+				const content = fileData.content ? atob(fileData.content) : '';
+
+				await createFile(
+					config,
+					$currentRepository.owner.login,
+					$currentRepository.name,
+					newPath,
+					content,
+					`Rename ${file.name} to ${newName}`
+				);
+
+				// Delete old file
+				await deleteFile(
+					config,
+					$currentRepository.owner.login,
+					$currentRepository.name,
+					file.path,
+					file.sha
+				);
+
+				await loadFiles();
+			} else {
+				alert('Renaming folders is not supported yet');
+			}
+		} catch (err) {
+			console.error('Failed to rename:', err);
+			alert('Failed to rename file');
+		}
+	}
+
 	function formatBytes(bytes: number): string {
 		if (bytes === 0) return '0 B';
 		const k = 1024;
@@ -200,12 +282,24 @@
 											: null,
 										file.type === 'file'
 											? renderComponent(DropdownMenu.Item, {
+													onclick: () => copyContents(file),
+													children: 'Copy Contents'
+												})
+											: null,
+										file.type === 'file'
+											? renderComponent(DropdownMenu.Item, {
 													onclick: () => window.open(file.download_url, '_blank'),
 													children: 'Download'
 												})
 											: null,
 										file.type === 'file' || file.type === 'dir'
 											? renderComponent(DropdownMenu.Separator, {})
+											: null,
+										file.type === 'file'
+											? renderComponent(DropdownMenu.Item, {
+													onclick: () => handleRename(file),
+													children: 'Rename'
+												})
 											: null,
 										renderComponent(DropdownMenu.Item, {
 											onclick: () => handleDelete(file),

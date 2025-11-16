@@ -4,9 +4,10 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import Icon from '@iconify/svelte';
-	import { createFile } from '$lib/services/github';
+	import { createFile, getContents } from '$lib/services/github';
 	import { authStore } from '$lib/stores/auth';
 	import { currentRepository } from '$lib/stores/repositories';
+	import type { FileContent } from '$lib/types';
 
 	let {
 		open = $bindable(false),
@@ -45,12 +46,35 @@
 				const path = currentPath ? `${currentPath}/${file.name}` : file.name;
 				const content = await file.arrayBuffer();
 
+				// Check if file already exists to get its SHA
+				let sha: string | undefined;
+				try {
+					const existingFile = await getContents(
+						config,
+						$currentRepository.owner.login,
+						$currentRepository.name,
+						path
+					);
+					// If it's a file (not a directory), get the SHA
+					if (!Array.isArray(existingFile)) {
+						const fileData = existingFile as FileContent;
+						sha = fileData.sha;
+					}
+				} catch (err: any) {
+					// File doesn't exist (404), which is fine - we'll create it
+					if (err.status !== 404) {
+						throw err; // Re-throw if it's not a 404 error
+					}
+				}
+
 				await createFile(
 					config,
 					$currentRepository.owner.login,
 					$currentRepository.name,
 					path,
-					content
+					content,
+					sha ? `Update ${file.name}` : `Add ${file.name}`,
+					sha
 				);
 			}
 
