@@ -111,9 +111,12 @@ export async function getContents(
 ): Promise<FileContent[]> {
 	const contents = await request(config, `/repos/${owner}/${repo}/contents/${path}`);
 
+	// GitHub API returns a single object for files, array for directories
+	const contentsArray = Array.isArray(contents) ? contents : [contents];
+
 	// Fetch last commit for each file to get last modified date
 	const contentsWithDates = await Promise.all(
-		contents.map(async (item: FileContent) => {
+		contentsArray.map(async (item: FileContent) => {
 			try {
 				const commits = await request(
 					config,
