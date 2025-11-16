@@ -25,5 +25,7 @@
 	)}
 	{...restProps}
 >
-	{@render children?.()}
+	{#if children}
+		{@render children()}
+	{/if}
 </div>

@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
+	import * as Tooltip from '$lib/components/ui/tooltip';
+	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import * as github from '$lib/services/github';
 	import { formatBytes } from '$lib/utils';
 	import type { FileContent } from '$lib/types';
@@ -17,6 +19,8 @@
 	let contents = $state<FileContent[]>([]);
 	let error = $state<string | null>(null);
 	let loading = $state(false);
+	let sortBy = $state<'name' | 'size' | 'type'>('name');
+	let sortOrder = $state<'asc' | 'desc'>('asc');
 
 	async function loadContents(path = '') {
 		if (!$currentRepository) return;
@@ -43,26 +47,38 @@
 	function handleItemClick(item: FileContent) {
 		if (item.type === 'dir') {
 			loadContents(item.path);
-		} else {
-			window.open(item.download_url, '_blank');
 		}
 	}
 
-	let copiedItems = $state<string[]>([]);
+	let copiedLinks = $state<string[]>([]);
+	let copiedContents = $state<string[]>([]);
 
-	function handleCopyUrl(item: FileContent) {
-		navigator.clipboard.writeText(item.download_url);
-
-		// Add the item to copied set
-		copiedItems.push(item.path);
-
-		// Remove the item after 3 seconds
+	async function handleCopyLink(item: FileContent, event: MouseEvent) {
+		event.stopPropagation();
+		await navigator.clipboard.writeText(item.download_url);
+		copiedLinks.push(item.path);
 		setTimeout(() => {
-			copiedItems.shift();
-		}, 1000);
+			copiedLinks = copiedLinks.filter((p) => p !== item.path);
+		}, 2000);
 	}
 
-	function handleDownload(item: FileContent) {
+	async function handleCopyContents(item: FileContent, event: MouseEvent) {
+		event.stopPropagation();
+		try {
+			const response = await fetch(item.download_url);
+			const text = await response.text();
+			await navigator.clipboard.writeText(text);
+			copiedContents.push(item.path);
+			setTimeout(() => {
+				copiedContents = copiedContents.filter((p) => p !== item.path);
+			}, 2000);
+		} catch (err) {
+			console.error('Failed to copy contents:', err);
+		}
+	}
+
+	function handleDownload(item: FileContent, event: MouseEvent) {
+		event.stopPropagation();
 		fetch(item.download_url)
 			.then((response) => response.blob())
 			.then((blob) => {
@@ -74,7 +90,8 @@
 			.catch(console.error);
 	}
 
-	async function handleDelete(item: FileContent) {
+	async function handleDelete(item: FileContent, event: MouseEvent) {
+		event.stopPropagation();
 		if (
 			!$currentRepository ||
 			!confirm(`Delete ${item.type === 'dir' ? 'folder' : 'file'}: ${item.name}?`)
@@ -119,6 +136,28 @@
 		];
 	}
 
+	function getSortedContents() {
+		return contents.toSorted((a, b) => {
+			// Always put directories first
+			if (a.type === 'dir' && b.type !== 'dir') return -1;
+			if (b.type === 'dir' && a.type !== 'dir') return 1;
+
+			// Sort by selected criteria
+			let comparison = 0;
+			if (sortBy === 'name') {
+				comparison = a.name.localeCompare(b.name);
+			} else if (sortBy === 'size') {
+				comparison = (a.size || 0) - (b.size || 0);
+			} else if (sortBy === 'type') {
+				const aExt = a.name.split('.').pop() || '';
+				const bExt = b.name.split('.').pop() || '';
+				comparison = aExt.localeCompare(bExt);
+			}
+
+			return sortOrder === 'asc' ? comparison : -comparison;
+		});
+	}
+
 	$effect(() => {
 		if ($currentRepository) {
 			loadContents();
@@ -129,127 +168,232 @@
 	});
 </script>
 
-<div class="space-y-4">
-	{#if !$currentRepository}
-		<Button variant="ghost" size="icon" onclick={sidebar.toggle}>
-			<Icon icon="lucide:panel-left" class="scale-[1.15]" />
-			<span class="sr-only">Toggle Sidebar</span>
-		</Button>
-	{/if}
-
-	{#if $currentRepository}
-		<div class="flex items-center justify-between">
+<Tooltip.Provider>
+	<div class="space-y-4">
+		<div class="flex items-center justify-between gap-4">
 			<div class="flex items-center gap-2">
-				<Button variant="ghost" size="icon" onclick={sidebar.toggle}>
-					<Icon icon="lucide:panel-left" class="scale-[1.15]" />
-					<span class="sr-only">Toggle Sidebar</span>
-				</Button>
+				<Tooltip.Root>
+					<Tooltip.Trigger asChild let:builder>
+						<Button builders={[builder]} variant="ghost" size="icon" onclick={sidebar.toggle}>
+							<Icon icon="lucide:panel-left" class="h-5 w-5" />
+							<span class="sr-only">Toggle Sidebar</span>
+						</Button>
+					</Tooltip.Trigger>
+					<Tooltip.Content>
+						<p>Toggle Sidebar</p>
+					</Tooltip.Content>
+				</Tooltip.Root>
 
-				{#each getBreadcrumbs() as crumb}
+			{#if $currentRepository}
+				{#each getBreadcrumbs() as crumb, i}
 					<Button variant="ghost" size="sm" onclick={() => loadContents(crumb.path)}>
 						{crumb.name}
 					</Button>
-					{#if crumb.path !== getBreadcrumbs().slice(-1)[0].path}
-						<span>/</span>
+					{#if i < getBreadcrumbs().length - 1}
+						<Icon icon="lucide:chevron-right" class="h-4 w-4 text-muted-foreground" />
 					{/if}
 				{/each}
-			</div>
+			{/if}
 		</div>
 
-		{#if loading}
-			<div class="py-8 text-center">Loading...</div>
-		{:else if error}
-			<div class="rounded-md bg-destructive/10 p-4 text-destructive">
-				{error}
-			</div>
-		{:else if contents.length === 0}
-			<div class="py-8 text-center text-muted-foreground">This folder is empty</div>
-		{:else}
-			<div class="rounded-md border">
-				<table class="w-full">
-					<thead class="bg-accent/50">
-						<tr class="border-b">
-							<th class="p-2 text-left">Name</th>
-							<th class="p-2 text-left">Size</th>
-							<th class="p-2 text-right">Actions</th>
-						</tr>
-					</thead>
-					<tbody>
-						{#each contents.toSorted((a, b) => {
-							if (a.type === 'dir' && b.type !== 'dir') return -1;
-							if (b.type === 'dir' && a.type !== 'dir') return 1;
-							if (a.name === 'index.json' && $currentRepository?.name === '3db-service') return 1;
-							if (b.name === 'index.json' && $currentRepository?.name === '3db-service') return -1;
-							return a.name.localeCompare(b.name);
-						}) as item}
-							<tr class="border-b border-border/40 last:border-0 hover:bg-accent">
-								<td class="px-2">
-									<Button variant="link" class="group px-0" onclick={() => handleItemClick(item)}>
-										{#if item.type === 'dir'}
-											<Icon icon="lucide:folder" class="scale-[1.1]" />
-										{:else}
-											<Icon icon="lucide:file" class="scale-[1.1] text-muted-foreground" />
-										{/if}
-										{item.name}
-										{#if item.type === 'dir'}
-											<Icon
-												icon="lucide:chevron-right"
-												class="-translate-x-1/2 scale-[1.1] opacity-0 transition group-hover:translate-x-0 group-hover:opacity-100"
-											/>
-										{:else}
-											<Icon
-												icon="lucide:external-link"
-												class="-translate-x-1/2 opacity-0 transition group-hover:translate-x-0 group-hover:opacity-50"
-											/>
-										{/if}
-									</Button>
-								</td>
-								<td class="px-2 text-sm">
-									{item.type === 'dir' ? '--' : formatBytes(item.size)}
-								</td>
-								<td class="px-2 pr-[3.5px] text-right">
-									{#if item.type === 'file' || item.type === 'dir'}
-										<div class="flex items-center justify-end gap-1">
-											{#if item.type === 'file'}
-												<Button
-													variant="outline"
-													class="w-9 hover:bg-secondary hover:text-secondary-foreground"
-													size="sm"
-													onclick={() => handleDownload(item)}
-												>
-													<Icon icon="lucide:download" class="scale-[1.05]" />
-												</Button>
-												<Button
-													variant="outline"
-													class="w-9 hover:bg-secondary hover:text-secondary-foreground"
-													size="sm"
-													onclick={() => handleCopyUrl(item)}
-												>
-													<Icon
-														icon={copiedItems.includes(item.path) ? 'lucide:check' : 'lucide:copy'}
-													/>
-												</Button>
-											{/if}
-											<Button
-												variant="outline"
-												size="sm"
-												class="w-9 hover:bg-destructive hover:text-destructive-foreground"
-												onclick={() => handleDelete(item)}
-											>
-												<Icon icon="lucide:trash" />
-											</Button>
-										</div>
-									{/if}
-								</td>
-							</tr>
-						{/each}
-					</tbody>
-				</table>
-			</div>
+		{#if $currentRepository && contents.length > 0}
+			<DropdownMenu.Root>
+				<DropdownMenu.Trigger asChild let:builder>
+					<Button builders={[builder]} variant="outline" size="sm">
+						<Icon icon="lucide:arrow-up-down" class="mr-2 h-4 w-4" />
+						Sort: {sortBy}
+						<Icon icon="lucide:chevron-down" class="ml-2 h-4 w-4" />
+					</Button>
+				</DropdownMenu.Trigger>
+				<DropdownMenu.Content align="end">
+					<DropdownMenu.Label>Sort by</DropdownMenu.Label>
+					<DropdownMenu.Separator />
+					<DropdownMenu.RadioGroup bind:value={sortBy}>
+						<DropdownMenu.RadioItem value="name">Name</DropdownMenu.RadioItem>
+						<DropdownMenu.RadioItem value="size">Size</DropdownMenu.RadioItem>
+						<DropdownMenu.RadioItem value="type">Type</DropdownMenu.RadioItem>
+					</DropdownMenu.RadioGroup>
+					<DropdownMenu.Separator />
+					<DropdownMenu.Label>Order</DropdownMenu.Label>
+					<DropdownMenu.RadioGroup bind:value={sortOrder}>
+						<DropdownMenu.RadioItem value="asc">
+							<Icon icon="lucide:arrow-up" class="mr-2 h-4 w-4" />
+							Ascending
+						</DropdownMenu.RadioItem>
+						<DropdownMenu.RadioItem value="desc">
+							<Icon icon="lucide:arrow-down" class="mr-2 h-4 w-4" />
+							Descending
+						</DropdownMenu.RadioItem>
+					</DropdownMenu.RadioGroup>
+				</DropdownMenu.Content>
+			</DropdownMenu.Root>
 		{/if}
-	{:else}
+	</div>
+
+	{#if !$currentRepository}
 		<div class="py-8 text-center text-muted-foreground">
 			Select a repository to view its contents
 		</div>
+	{:else if loading}
+		<div class="flex items-center justify-center py-8">
+			<Icon icon="lucide:loader-2" class="mr-2 h-6 w-6 animate-spin" />
+			<span>Loading...</span>
+		</div>
+	{:else if error}
+		<div class="rounded-md bg-destructive/10 p-4 text-destructive">
+			{error}
+		</div>
+	{:else if contents.length === 0}
+		<div class="py-8 text-center text-muted-foreground">This folder is empty</div>
+	{:else}
+		<div class="rounded-md border">
+			<table class="w-full">
+				<thead class="bg-accent/50">
+					<tr class="border-b">
+						<th class="p-3 text-left text-sm font-medium">Name</th>
+						<th class="p-3 text-left text-sm font-medium">Size</th>
+						<th class="p-3 text-right text-sm font-medium">Actions</th>
+					</tr>
+				</thead>
+				<tbody>
+					{#each getSortedContents() as item}
+						<tr class="border-b border-border/40 last:border-0 hover:bg-accent/50">
+							<td class="p-3">
+								<button
+									class="group flex items-center gap-2 text-left hover:underline"
+									onclick={() => handleItemClick(item)}
+								>
+									{#if item.type === 'dir'}
+										<Icon icon="lucide:folder" class="h-4 w-4 text-blue-500" />
+									{:else}
+										<Icon icon="lucide:file" class="h-4 w-4 text-muted-foreground" />
+									{/if}
+									<span>{item.name}</span>
+									{#if item.type === 'dir'}
+										<Icon
+											icon="lucide:chevron-right"
+											class="h-4 w-4 opacity-0 transition group-hover:opacity-100"
+										/>
+									{/if}
+								</button>
+							</td>
+							<td class="p-3 text-sm text-muted-foreground">
+								{item.type === 'dir' ? '--' : formatBytes(item.size)}
+							</td>
+							<td class="p-3">
+								<div class="flex items-center justify-end gap-1">
+									{#if item.type === 'file'}
+										<!-- Open in New Tab -->
+										<Tooltip.Root>
+												<Tooltip.Trigger asChild let:builder>
+													<Button
+														builders={[builder]}
+														variant="ghost"
+														size="sm"
+														onclick={(e) => {
+															e.stopPropagation();
+															window.open(item.download_url, '_blank');
+														}}
+													>
+														<Icon icon="lucide:external-link" class="h-4 w-4" />
+														<span class="sr-only">Open</span>
+													</Button>
+												</Tooltip.Trigger>
+												<Tooltip.Content>
+													<p>Open in new tab</p>
+												</Tooltip.Content>
+											</Tooltip.Root>
+
+										<!-- Copy Link -->
+										<Tooltip.Root>
+												<Tooltip.Trigger asChild let:builder>
+													<Button
+														builders={[builder]}
+														variant="ghost"
+														size="sm"
+														onclick={(e) => handleCopyLink(item, e)}
+													>
+														<Icon
+															icon={copiedLinks.includes(item.path)
+																? 'lucide:check'
+																: 'lucide:link'}
+															class="h-4 w-4"
+														/>
+														<span class="sr-only">Copy Link</span>
+													</Button>
+												</Tooltip.Trigger>
+												<Tooltip.Content>
+													<p>Copy link</p>
+												</Tooltip.Content>
+											</Tooltip.Root>
+
+										<!-- Copy Contents -->
+										<Tooltip.Root>
+												<Tooltip.Trigger asChild let:builder>
+													<Button
+														builders={[builder]}
+														variant="ghost"
+														size="sm"
+														onclick={(e) => handleCopyContents(item, e)}
+													>
+														<Icon
+															icon={copiedContents.includes(item.path)
+																? 'lucide:check'
+																: 'lucide:copy'}
+															class="h-4 w-4"
+														/>
+														<span class="sr-only">Copy Contents</span>
+													</Button>
+												</Tooltip.Trigger>
+												<Tooltip.Content>
+													<p>Copy file contents</p>
+												</Tooltip.Content>
+											</Tooltip.Root>
+
+										<!-- Download -->
+										<Tooltip.Root>
+												<Tooltip.Trigger asChild let:builder>
+													<Button
+														builders={[builder]}
+														variant="ghost"
+														size="sm"
+														onclick={(e) => handleDownload(item, e)}
+													>
+														<Icon icon="lucide:download" class="h-4 w-4" />
+														<span class="sr-only">Download</span>
+													</Button>
+												</Tooltip.Trigger>
+												<Tooltip.Content>
+													<p>Download file</p>
+												</Tooltip.Content>
+											</Tooltip.Root>
+									{/if}
+
+									<!-- Delete -->
+									<Tooltip.Root>
+											<Tooltip.Trigger asChild let:builder>
+												<Button
+													builders={[builder]}
+													variant="ghost"
+													size="sm"
+													onclick={(e) => handleDelete(item, e)}
+													class="text-destructive hover:bg-destructive/10 hover:text-destructive"
+												>
+													<Icon icon="lucide:trash-2" class="h-4 w-4" />
+													<span class="sr-only">Delete</span>
+												</Button>
+											</Tooltip.Trigger>
+											<Tooltip.Content>
+												<p>Delete {item.type === 'dir' ? 'folder' : 'file'}</p>
+											</Tooltip.Content>
+										</Tooltip.Root>
+								</div>
+							</td>
+						</tr>
+					{/each}
+				</tbody>
+			</table>
+		</div>
 	{/if}
-</div>
+	</div>
+</Tooltip.Provider>

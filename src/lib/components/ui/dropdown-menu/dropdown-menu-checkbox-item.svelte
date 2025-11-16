@@ -35,6 +35,8 @@
 				<Check class={cn('size-4', !checked && 'text-transparent')} />
 			{/if}
 		</span>
-		{@render childrenProp?.()}
+		{#if childrenProp}
+		{@render childrenProp()}
+	{/if}
 	{/snippet}
 </DropdownMenuPrimitive.CheckboxItem>

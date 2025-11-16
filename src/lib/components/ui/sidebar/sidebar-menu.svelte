@@ -17,5 +17,7 @@
 	class={cn('flex w-full min-w-0 flex-col gap-1', className)}
 	{...restProps}
 >
-	{@render children?.()}
+	{#if children}
+		{@render children()}
+	{/if}
 </ul>

@@ -17,5 +17,7 @@
 	class={cn('relative flex w-full min-w-0 flex-col p-2', className)}
 	{...restProps}
 >
-	{@render children?.()}
+	{#if children}
+		{@render children()}
+	{/if}
 </div>

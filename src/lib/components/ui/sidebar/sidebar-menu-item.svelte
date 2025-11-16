@@ -17,5 +17,7 @@
 	class={cn('group/menu-item relative', className)}
 	{...restProps}
 >
-	{@render children?.()}
+	{#if children}
+		{@render children()}
+	{/if}
 </li>

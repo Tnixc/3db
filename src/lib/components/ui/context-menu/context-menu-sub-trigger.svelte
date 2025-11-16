@@ -23,6 +23,8 @@
 	)}
 	{...restProps}
 >
-	{@render children?.()}
+	{#if children}
+		{@render children()}
+	{/if}
 	<ChevronRight class="ml-auto size-4" />
 </ContextMenuPrimitive.SubTrigger>
