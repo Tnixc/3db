@@ -134,9 +134,15 @@
 					<div class="flex flex-1 items-center gap-2">
 						<Icon icon="lucide:database" class="size-4" />
 						<span class="font-medium">{$currentRepository.name}</span>
-						<span class="text-sm text-muted-foreground">
-							by {$currentRepository.owner.login}
-						</span>
+						<Button
+							variant="ghost"
+							size="sm"
+							class="h-7 gap-1.5 px-2 text-sm"
+							onclick={() => window.open(`https://github.com/${$currentRepository.owner.login}/${$currentRepository.name}`, '_blank')}
+						>
+							<Icon icon="lucide:external-link" class="size-3.5" />
+							Open on GitHub
+						</Button>
 					</div>
 				{:else}
 					<span class="text-muted-foreground">Select a repository to get started</span>

@@ -248,7 +248,8 @@
 					file: row.original,
 					onNavigate: navigateTo
 				});
-			}
+			},
+			size: 9999
 		},
 		{
 			accessorKey: 'type',
@@ -266,7 +267,8 @@
 					};
 				});
 				return renderSnippet(typeSnippet, { type: row.original.type });
-			}
+			},
+			size: 100
 		},
 		{
 			accessorKey: 'size',
@@ -291,7 +293,8 @@
 				const sizeA = rowA.original.type === 'dir' ? -1 : rowA.original.size;
 				const sizeB = rowB.original.type === 'dir' ? -1 : rowB.original.size;
 				return sizeA - sizeB;
-			}
+			},
+			size: 100
 		},
 		{
 			accessorKey: 'last_modified',
@@ -316,7 +319,8 @@
 				const dateA = rowA.original.last_modified ? new Date(rowA.original.last_modified).getTime() : 0;
 				const dateB = rowB.original.last_modified ? new Date(rowB.original.last_modified).getTime() : 0;
 				return dateA - dateB;
-			}
+			},
+			size: 150
 		},
 		{
 			id: 'actions',
@@ -331,7 +335,8 @@
 					onRename: handleRename,
 					onDelete: handleDelete
 				});
-			}
+			},
+			size: 50
 		}
 	];
 
