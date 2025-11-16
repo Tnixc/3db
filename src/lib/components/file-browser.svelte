@@ -183,21 +183,19 @@
 		{
 			accessorKey: 'name',
 			header: ({ column }) => {
-				const headerSnippet = createRawSnippet<[{ column: any }]>((getColumn) => {
-					const { column } = getColumn();
-					const isSorted = column.getIsSorted();
+				const isSorted = column.getIsSorted();
+				const icon = isSorted === 'asc'
+					? 'lucide:arrow-up'
+					: isSorted === 'desc'
+						? 'lucide:arrow-down'
+						: 'lucide:arrows-up-down';
+				const headerSnippet = createRawSnippet(() => {
 					return {
 						render: () => `
-							<button class="flex items-center gap-2 hover:text-foreground transition-colors" onclick="event.target.closest('button').dispatchEvent(new CustomEvent('sort', { bubbles: true }))">
+							<div class="flex items-center gap-2">
 								<span>Name</span>
-								${
-									isSorted === 'asc'
-										? '<iconify-icon icon="lucide:arrow-up" class="size-4"></iconify-icon>'
-										: isSorted === 'desc'
-											? '<iconify-icon icon="lucide:arrow-down" class="size-4"></iconify-icon>'
-											: '<iconify-icon icon="lucide:arrows-up-down" class="size-4 opacity-50"></iconify-icon>'
-								}
-							</button>
+								<iconify-icon icon="${icon}" class="size-4 ${!isSorted ? 'opacity-50' : ''}"></iconify-icon>
+							</div>
 						`
 					};
 				});
@@ -205,7 +203,7 @@
 					variant: 'ghost',
 					class: '-ml-4 h-auto p-0 hover:bg-transparent font-medium',
 					onclick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-					children: renderSnippet(headerSnippet, { column })
+					children: renderSnippet(headerSnippet, {})
 				});
 			},
 			cell: ({ row }) => {
@@ -237,21 +235,19 @@
 		{
 			accessorKey: 'type',
 			header: ({ column }) => {
-				const headerSnippet = createRawSnippet<[{ column: any }]>((getColumn) => {
-					const { column } = getColumn();
-					const isSorted = column.getIsSorted();
+				const isSorted = column.getIsSorted();
+				const icon = isSorted === 'asc'
+					? 'lucide:arrow-up'
+					: isSorted === 'desc'
+						? 'lucide:arrow-down'
+						: 'lucide:arrows-up-down';
+				const headerSnippet = createRawSnippet(() => {
 					return {
 						render: () => `
-							<button class="flex items-center gap-2 hover:text-foreground transition-colors" onclick="event.target.closest('button').dispatchEvent(new CustomEvent('sort', { bubbles: true }))">
+							<div class="flex items-center gap-2">
 								<span>Type</span>
-								${
-									isSorted === 'asc'
-										? '<iconify-icon icon="lucide:arrow-up" class="size-4"></iconify-icon>'
-										: isSorted === 'desc'
-											? '<iconify-icon icon="lucide:arrow-down" class="size-4"></iconify-icon>'
-											: '<iconify-icon icon="lucide:arrows-up-down" class="size-4 opacity-50"></iconify-icon>'
-								}
-							</button>
+								<iconify-icon icon="${icon}" class="size-4 ${!isSorted ? 'opacity-50' : ''}"></iconify-icon>
+							</div>
 						`
 					};
 				});
@@ -259,7 +255,7 @@
 					variant: 'ghost',
 					class: '-ml-4 h-auto p-0 hover:bg-transparent font-medium',
 					onclick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-					children: renderSnippet(headerSnippet, { column })
+					children: renderSnippet(headerSnippet, {})
 				});
 			},
 			cell: ({ row }) => {
@@ -275,21 +271,19 @@
 		{
 			accessorKey: 'size',
 			header: ({ column }) => {
-				const headerSnippet = createRawSnippet<[{ column: any }]>((getColumn) => {
-					const { column } = getColumn();
-					const isSorted = column.getIsSorted();
+				const isSorted = column.getIsSorted();
+				const icon = isSorted === 'asc'
+					? 'lucide:arrow-up'
+					: isSorted === 'desc'
+						? 'lucide:arrow-down'
+						: 'lucide:arrows-up-down';
+				const headerSnippet = createRawSnippet(() => {
 					return {
 						render: () => `
-							<button class="flex items-center justify-end gap-2 w-full hover:text-foreground transition-colors" onclick="event.target.closest('button').dispatchEvent(new CustomEvent('sort', { bubbles: true }))">
+							<div class="flex items-center justify-end gap-2 w-full">
 								<span>Size</span>
-								${
-									isSorted === 'asc'
-										? '<iconify-icon icon="lucide:arrow-up" class="size-4"></iconify-icon>'
-										: isSorted === 'desc'
-											? '<iconify-icon icon="lucide:arrow-down" class="size-4"></iconify-icon>'
-											: '<iconify-icon icon="lucide:arrows-up-down" class="size-4 opacity-50"></iconify-icon>'
-								}
-							</button>
+								<iconify-icon icon="${icon}" class="size-4 ${!isSorted ? 'opacity-50' : ''}"></iconify-icon>
+							</div>
 						`
 					};
 				});
@@ -297,7 +291,7 @@
 					variant: 'ghost',
 					class: '-mr-4 h-auto p-0 hover:bg-transparent font-medium w-full',
 					onclick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-					children: renderSnippet(headerSnippet, { column })
+					children: renderSnippet(headerSnippet, {})
 				});
 			},
 			cell: ({ row }) => {
