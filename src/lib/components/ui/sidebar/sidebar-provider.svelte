@@ -10,10 +10,20 @@
 		SIDEBAR_WIDTH_ICON,
 	} from "./constants.js";
 	import { setSidebar } from "./context.svelte.js";
+	import { browser } from "$app/environment";
+
+	// Read the cookie to restore the sidebar state
+	function getCookieValue(name: string): string | null {
+		if (!browser) return null;
+		const value = `; ${document.cookie}`;
+		const parts = value.split(`; ${name}=`);
+		if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
+		return null;
+	}
 
 	let {
 		ref = $bindable(null),
-		open = $bindable(true),
+		open = $bindable(getCookieValue(SIDEBAR_COOKIE_NAME) === "false" ? false : true),
 		onOpenChange = () => {},
 		class: className,
 		style,
