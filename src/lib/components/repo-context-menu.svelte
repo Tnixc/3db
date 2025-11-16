@@ -78,7 +78,7 @@
 <ContextMenu.Root>
 	<ContextMenu.Trigger>
 		<div>
-			{@render children?.()}
+			{@render children()}
 		</div>
 	</ContextMenu.Trigger>
 	<ContextMenu.Content>
