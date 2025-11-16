@@ -182,7 +182,32 @@
 	const columns: ColumnDef<FileContent>[] = [
 		{
 			accessorKey: 'name',
-			header: 'Name',
+			header: ({ column }) => {
+				const headerSnippet = createRawSnippet<[{ column: any }]>((getColumn) => {
+					const { column } = getColumn();
+					const isSorted = column.getIsSorted();
+					return {
+						render: () => `
+							<button class="flex items-center gap-2 hover:text-foreground transition-colors" onclick="event.target.closest('button').dispatchEvent(new CustomEvent('sort', { bubbles: true }))">
+								<span>Name</span>
+								${
+									isSorted === 'asc'
+										? '<iconify-icon icon="lucide:arrow-up" class="size-4"></iconify-icon>'
+										: isSorted === 'desc'
+											? '<iconify-icon icon="lucide:arrow-down" class="size-4"></iconify-icon>'
+											: '<iconify-icon icon="lucide:arrows-up-down" class="size-4 opacity-50"></iconify-icon>'
+								}
+							</button>
+						`
+					};
+				});
+				return renderComponent(Button, {
+					variant: 'ghost',
+					class: '-ml-4 h-auto p-0 hover:bg-transparent font-medium',
+					onclick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+					children: renderSnippet(headerSnippet, { column })
+				});
+			},
 			cell: ({ row }) => {
 				const file = row.original;
 				const nameSnippet = createRawSnippet<[{ file: FileContent }]>((getFile) => {
@@ -210,14 +235,70 @@
 			}
 		},
 		{
-			accessorKey: 'size',
-			header: () => {
-				const headerSnippet = createRawSnippet(() => {
+			accessorKey: 'type',
+			header: ({ column }) => {
+				const headerSnippet = createRawSnippet<[{ column: any }]>((getColumn) => {
+					const { column } = getColumn();
+					const isSorted = column.getIsSorted();
 					return {
-						render: () => `<div class="text-right">Size</div>`
+						render: () => `
+							<button class="flex items-center gap-2 hover:text-foreground transition-colors" onclick="event.target.closest('button').dispatchEvent(new CustomEvent('sort', { bubbles: true }))">
+								<span>Type</span>
+								${
+									isSorted === 'asc'
+										? '<iconify-icon icon="lucide:arrow-up" class="size-4"></iconify-icon>'
+										: isSorted === 'desc'
+											? '<iconify-icon icon="lucide:arrow-down" class="size-4"></iconify-icon>'
+											: '<iconify-icon icon="lucide:arrows-up-down" class="size-4 opacity-50"></iconify-icon>'
+								}
+							</button>
+						`
 					};
 				});
-				return renderSnippet(headerSnippet, {});
+				return renderComponent(Button, {
+					variant: 'ghost',
+					class: '-ml-4 h-auto p-0 hover:bg-transparent font-medium',
+					onclick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+					children: renderSnippet(headerSnippet, { column })
+				});
+			},
+			cell: ({ row }) => {
+				const typeSnippet = createRawSnippet<[{ type: string }]>((getType) => {
+					const { type } = getType();
+					return {
+						render: () => `<div class="text-muted-foreground capitalize">${type === 'dir' ? 'Folder' : 'File'}</div>`
+					};
+				});
+				return renderSnippet(typeSnippet, { type: row.original.type });
+			}
+		},
+		{
+			accessorKey: 'size',
+			header: ({ column }) => {
+				const headerSnippet = createRawSnippet<[{ column: any }]>((getColumn) => {
+					const { column } = getColumn();
+					const isSorted = column.getIsSorted();
+					return {
+						render: () => `
+							<button class="flex items-center justify-end gap-2 w-full hover:text-foreground transition-colors" onclick="event.target.closest('button').dispatchEvent(new CustomEvent('sort', { bubbles: true }))">
+								<span>Size</span>
+								${
+									isSorted === 'asc'
+										? '<iconify-icon icon="lucide:arrow-up" class="size-4"></iconify-icon>'
+										: isSorted === 'desc'
+											? '<iconify-icon icon="lucide:arrow-down" class="size-4"></iconify-icon>'
+											: '<iconify-icon icon="lucide:arrows-up-down" class="size-4 opacity-50"></iconify-icon>'
+								}
+							</button>
+						`
+					};
+				});
+				return renderComponent(Button, {
+					variant: 'ghost',
+					class: '-mr-4 h-auto p-0 hover:bg-transparent font-medium w-full',
+					onclick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+					children: renderSnippet(headerSnippet, { column })
+				});
 			},
 			cell: ({ row }) => {
 				const sizeSnippet = createRawSnippet<[{ size: string }]>((getSize) => {
@@ -229,6 +310,11 @@
 				return renderSnippet(sizeSnippet, {
 					size: row.original.type === 'dir' ? '-' : formatBytes(row.original.size)
 				});
+			},
+			sortingFn: (rowA, rowB) => {
+				const sizeA = rowA.original.type === 'dir' ? -1 : rowA.original.size;
+				const sizeB = rowB.original.type === 'dir' ? -1 : rowB.original.size;
+				return sizeA - sizeB;
 			}
 		},
 		{
