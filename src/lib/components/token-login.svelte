@@ -2,21 +2,26 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import Icon from '@iconify/svelte';
-	import { appState } from '$lib/stores/auth';
+	import { authStore } from '$lib/stores/auth';
 
 	let token = $state('');
+	let error = $state<string | null>(null);
 
-	const state = $derived($appState);
-	const isLoading = $derived(state.status === 'logging_in');
-	const error = $derived(state.status === 'error' ? state.error : null);
+	const isLoading = $derived($authStore.status === 'logging_in');
 
 	async function handleLogin() {
 		if (!token.trim()) {
-			appState.setError('Please enter a token');
+			error = 'Please enter a token';
 			return;
 		}
 
-		await appState.login(token);
+		error = null;
+		try {
+			await authStore.login(token);
+		} catch (err) {
+			error = 'Invalid token or unable to fetch user information';
+			console.error('Login error:', err);
+		}
 	}
 </script>
 
