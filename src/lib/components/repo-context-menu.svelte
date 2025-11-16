@@ -9,7 +9,16 @@
 
 	let { repo }: { repo: Repository } = $props();
 
+	// 3db-service is a system repository and cannot be deleted
+	const isServiceRepo = $derived(repo.name === '3db-service');
+
 	async function handleDelete() {
+		// Prevent deletion of service repository
+		if (isServiceRepo) {
+			alert('The 3db-service repository is required for the app to function and cannot be deleted.');
+			return;
+		}
+
 		if (!confirm(`Are you sure you want to delete "${repo.name}"? This action cannot be undone.`)) {
 			return;
 		}
@@ -56,10 +65,12 @@
 			<Icon icon="lucide:copy" class="mr-2 size-4" />
 			Copy URL
 		</DropdownMenu.Item>
-		<DropdownMenu.Separator />
-		<DropdownMenu.Item onclick={handleDelete} class="text-destructive">
-			<Icon icon="lucide:trash" class="mr-2 size-4" />
-			Delete Repository
-		</DropdownMenu.Item>
+		{#if !isServiceRepo}
+			<DropdownMenu.Separator />
+			<DropdownMenu.Item onclick={handleDelete} class="text-destructive">
+				<Icon icon="lucide:trash" class="mr-2 size-4" />
+				Delete Repository
+			</DropdownMenu.Item>
+		{/if}
 	</DropdownMenu.Content>
 </DropdownMenu.Root>

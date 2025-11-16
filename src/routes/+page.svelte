@@ -1,9 +1,11 @@
 <script lang="ts">
 	import FileBrowser from '$lib/components/file-browser.svelte';
 	import FileUploadDialog from '$lib/components/file-upload-dialog.svelte';
+	import TokenLogin from '$lib/components/token-login.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import Icon from '@iconify/svelte';
 	import { currentRepository } from '$lib/stores/repositories';
+	import { authStore } from '$lib/stores/auth';
 
 	let currentPath = $state('');
 	let uploadDialogOpen = $state(false);
@@ -22,7 +24,9 @@
 	}
 </script>
 
-{#if $currentRepository}
+{#if $authStore.status === 'logged_out' || $authStore.status === 'logging_in'}
+	<TokenLogin />
+{:else if $currentRepository}
 	<div class="mb-4 flex items-center justify-between">
 		<div>
 			<h1 class="text-2xl font-bold">File Browser</h1>
