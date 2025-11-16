@@ -1,6 +1,6 @@
 <script lang="ts">
-	// import { Button } from '$lib/components/ui/button';
-	// import { Input } from '$lib/components/ui/input';
+	import { Button } from '$lib/components/ui/button';
+	import { Input } from '$lib/components/ui/input';
 	import Icon from '@iconify/svelte';
 	import { authStore } from '$lib/stores/auth';
 
@@ -38,12 +38,11 @@
 		</div>
 
 		<div class="space-y-2">
-			<input
+			<Input
 				type="password"
 				bind:value={token}
 				placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
 				disabled={isLoading}
-				class="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
 				onkeydown={(e) => {
 					if (e.key === 'Enter') handleLogin();
 				}}
@@ -51,11 +50,7 @@
 			{#if error}
 				<p class="text-sm text-destructive">{error}</p>
 			{/if}
-			<button
-				onclick={handleLogin}
-				disabled={isLoading || !token.trim()}
-				class="w-full inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2"
-			>
+			<Button class="w-full" onclick={handleLogin} disabled={isLoading || !token.trim()}>
 				{#if isLoading}
 					<Icon icon="lucide:loader-2" class="mr-2 h-4 w-4 animate-spin" />
 					Verifying...
@@ -63,7 +58,7 @@
 					<Icon icon="lucide:log-in" class="mr-2 h-4 w-4" />
 					Login
 				{/if}
-			</button>
+			</Button>
 		</div>
 
 		<div class="rounded-lg border border-blue-500/20 bg-blue-500/10 p-4">
@@ -86,7 +81,8 @@
 					Go to <a
 						href="https://github.com/settings/tokens/new"
 						target="_blank"
-						class="underline hover:text-primary">GitHub Token Settings</a>
+						class="underline hover:text-primary">GitHub Token Settings</a
+					>
 				</li>
 				<li>Click "Generate new token (classic)"</li>
 				<li>Give it a name (e.g., "3db access")</li>
