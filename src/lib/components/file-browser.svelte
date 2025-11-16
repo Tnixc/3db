@@ -180,6 +180,23 @@
 		return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
 	}
 
+	function formatDate(dateString?: string): string {
+		if (!dateString) return '-';
+		const date = new Date(dateString);
+		const now = new Date();
+		const diffMs = now.getTime() - date.getTime();
+		const diffMins = Math.floor(diffMs / 60000);
+		const diffHours = Math.floor(diffMs / 3600000);
+		const diffDays = Math.floor(diffMs / 86400000);
+
+		if (diffMins < 1) return 'Just now';
+		if (diffMins < 60) return `${diffMins}m ago`;
+		if (diffHours < 24) return `${diffHours}h ago`;
+		if (diffDays < 30) return `${diffDays}d ago`;
+
+		return date.toLocaleDateString();
+	}
+
 	const columns: ColumnDef<FileContent>[] = [
 		{
 			accessorKey: 'name',
@@ -238,15 +255,14 @@
 			header: ({ column }) => {
 				return renderComponent(SortableHeader, {
 					column,
-					children: 'Size',
-					align: 'right'
+					children: 'Size'
 				});
 			},
 			cell: ({ row }) => {
 				const sizeSnippet = createRawSnippet<[{ size: string }]>((getSize) => {
 					const { size } = getSize();
 					return {
-						render: () => `<div class="text-right text-muted-foreground">${size}</div>`
+						render: () => `<div class="text-muted-foreground">${size}</div>`
 					};
 				});
 				return renderSnippet(sizeSnippet, {
@@ -257,6 +273,31 @@
 				const sizeA = rowA.original.type === 'dir' ? -1 : rowA.original.size;
 				const sizeB = rowB.original.type === 'dir' ? -1 : rowB.original.size;
 				return sizeA - sizeB;
+			}
+		},
+		{
+			accessorKey: 'last_modified',
+			header: ({ column }) => {
+				return renderComponent(SortableHeader, {
+					column,
+					children: 'Last Updated'
+				});
+			},
+			cell: ({ row }) => {
+				const dateSnippet = createRawSnippet<[{ date: string }]>((getDate) => {
+					const { date } = getDate();
+					return {
+						render: () => `<div class="text-muted-foreground">${date}</div>`
+					};
+				});
+				return renderSnippet(dateSnippet, {
+					date: formatDate(row.original.last_modified)
+				});
+			},
+			sortingFn: (rowA, rowB) => {
+				const dateA = rowA.original.last_modified ? new Date(rowA.original.last_modified).getTime() : 0;
+				const dateB = rowB.original.last_modified ? new Date(rowB.original.last_modified).getTime() : 0;
+				return dateA - dateB;
 			}
 		},
 		{

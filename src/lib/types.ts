@@ -23,6 +23,7 @@ export type FileContent = {
 	type: 'file' | 'dir';
 	content?: string;
 	encoding?: string;
+	last_modified?: string;
 };
 
 export type ServiceConfig = {

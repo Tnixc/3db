@@ -32,8 +32,11 @@ async function request(
 		headers: {
 			Authorization: `Bearer ${config.token}`,
 			Accept: 'application/vnd.github.v3+json',
+			'Cache-Control': 'no-cache, no-store, must-revalidate',
+			Pragma: 'no-cache',
 			...options.headers
-		}
+		},
+		cache: 'no-store'
 	});
 
 	if (!response.ok) {
@@ -104,7 +107,30 @@ export async function getContents(
 	repo: string,
 	path = ''
 ): Promise<FileContent[]> {
-	return request(config, `/repos/${owner}/${repo}/contents/${path}`);
+	const contents = await request(config, `/repos/${owner}/${repo}/contents/${path}`);
+
+	// Fetch last commit for each file to get last modified date
+	const contentsWithDates = await Promise.all(
+		contents.map(async (item: FileContent) => {
+			try {
+				const commits = await request(
+					config,
+					`/repos/${owner}/${repo}/commits?path=${encodeURIComponent(item.path)}&page=1&per_page=1`
+				);
+				if (commits && commits.length > 0) {
+					return {
+						...item,
+						last_modified: commits[0].commit.committer.date
+					};
+				}
+			} catch (err) {
+				console.warn(`Failed to fetch commit date for ${item.path}:`, err);
+			}
+			return item;
+		})
+	);
+
+	return contentsWithDates;
 }
 
 // Add utility function for base64 encoding
