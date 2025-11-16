@@ -34,8 +34,10 @@
 		const unsubscribe = authStore.subscribe((state) => {
 			if (state.status === 'logged_in') {
 				// User just logged in, start initialization
+				console.log('[Layout] Starting initialization...');
 				initializeApp(state.token, state.user.login, state.user.email).catch((error) => {
 					console.error('[Layout] Initialization failed:', error);
+					// Don't need to call setError here - initializeApp already does it
 				});
 			}
 		});

@@ -30,17 +30,24 @@ async function request(
 	const response = await fetch(`https://api.github.com${endpoint}`, {
 		...options,
 		headers: {
-			Authorization: `token ${config.token}`,
+			Authorization: `Bearer ${config.token}`,
 			Accept: 'application/vnd.github.v3+json',
 			...options.headers
 		}
 	});
 
 	if (!response.ok) {
+		const errorText = await response.text();
+		console.error(`GitHub API error [${response.status}]:`, errorText);
 		throw new GitHubError(response.status, response.statusText);
 	}
 
-	return response.json();
+	// Handle empty responses (like 204 No Content)
+	const contentType = response.headers.get('content-type');
+	if (contentType && contentType.includes('application/json')) {
+		return response.json();
+	}
+	return null;
 }
 
 export async function createRepository(config: GitHubConfig, name: string): Promise<Repository> {
@@ -61,12 +68,14 @@ export async function getRepositories(config: GitHubConfig): Promise<Repository[
 	while (nextUrl) {
 		const response = await fetch(`https://api.github.com${nextUrl}`, {
 			headers: {
-				Authorization: `token ${config.token}`,
+				Authorization: `Bearer ${config.token}`,
 				Accept: 'application/vnd.github.v3+json'
 			}
 		});
 
 		if (!response.ok) {
+			const errorText = await response.text();
+			console.error(`GitHub API error [${response.status}]:`, errorText);
 			throw new Error(`GitHub API error: ${response.statusText}`);
 		}
 
