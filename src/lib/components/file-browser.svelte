@@ -16,7 +16,6 @@
 	import { authStore } from '$lib/stores/auth';
 	import { getContents, deleteFile, deleteFolder, createFile } from '$lib/services/github';
 	import FileActionsMenu from './file-actions-menu.svelte';
-	import SortableHeader from './sortable-header.svelte';
 
 	let {
 		currentPath = $bindable(''),
@@ -235,9 +234,21 @@
 		{
 			accessorKey: 'name',
 			header: ({ column }) => {
-				return renderComponent(SortableHeader, {
-					column,
-					children: 'Name'
+				const isSorted = column.getIsSorted();
+				const icon = isSorted === 'asc' ? 'lucide:arrow-up' : isSorted === 'desc' ? 'lucide:arrow-down' : 'lucide:arrows-up-down';
+				const headerSnippet = createRawSnippet(() => ({
+					render: () => `
+						<div class="flex items-center gap-2">
+							<span>Name</span>
+							<iconify-icon icon="${icon}" class="size-4 ${!isSorted ? 'opacity-50' : ''}"></iconify-icon>
+						</div>
+					`
+				}));
+				return renderComponent(Button, {
+					variant: 'ghost',
+					class: '-ml-4 h-auto p-0 hover:bg-transparent font-medium',
+					onclick: column.getToggleSortingHandler(),
+					children: renderSnippet(headerSnippet)
 				});
 			},
 			cell: ({ row }) => {
@@ -269,9 +280,21 @@
 		{
 			accessorKey: 'type',
 			header: ({ column }) => {
-				return renderComponent(SortableHeader, {
-					column,
-					children: 'Type'
+				const isSorted = column.getIsSorted();
+				const icon = isSorted === 'asc' ? 'lucide:arrow-up' : isSorted === 'desc' ? 'lucide:arrow-down' : 'lucide:arrows-up-down';
+				const headerSnippet = createRawSnippet(() => ({
+					render: () => `
+						<div class="flex items-center gap-2">
+							<span>Type</span>
+							<iconify-icon icon="${icon}" class="size-4 ${!isSorted ? 'opacity-50' : ''}"></iconify-icon>
+						</div>
+					`
+				}));
+				return renderComponent(Button, {
+					variant: 'ghost',
+					class: '-ml-4 h-auto p-0 hover:bg-transparent font-medium',
+					onclick: column.getToggleSortingHandler(),
+					children: renderSnippet(headerSnippet)
 				});
 			},
 			cell: ({ row }) => {
@@ -287,9 +310,21 @@
 		{
 			accessorKey: 'size',
 			header: ({ column }) => {
-				return renderComponent(SortableHeader, {
-					column,
-					children: 'Size'
+				const isSorted = column.getIsSorted();
+				const icon = isSorted === 'asc' ? 'lucide:arrow-up' : isSorted === 'desc' ? 'lucide:arrow-down' : 'lucide:arrows-up-down';
+				const headerSnippet = createRawSnippet(() => ({
+					render: () => `
+						<div class="flex items-center gap-2">
+							<span>Size</span>
+							<iconify-icon icon="${icon}" class="size-4 ${!isSorted ? 'opacity-50' : ''}"></iconify-icon>
+						</div>
+					`
+				}));
+				return renderComponent(Button, {
+					variant: 'ghost',
+					class: '-ml-4 h-auto p-0 hover:bg-transparent font-medium',
+					onclick: column.getToggleSortingHandler(),
+					children: renderSnippet(headerSnippet)
 				});
 			},
 			cell: ({ row }) => {
@@ -312,9 +347,21 @@
 		{
 			accessorKey: 'last_modified',
 			header: ({ column }) => {
-				return renderComponent(SortableHeader, {
-					column,
-					children: 'Last Updated'
+				const isSorted = column.getIsSorted();
+				const icon = isSorted === 'asc' ? 'lucide:arrow-up' : isSorted === 'desc' ? 'lucide:arrow-down' : 'lucide:arrows-up-down';
+				const headerSnippet = createRawSnippet(() => ({
+					render: () => `
+						<div class="flex items-center gap-2">
+							<span>Last Updated</span>
+							<iconify-icon icon="${icon}" class="size-4 ${!isSorted ? 'opacity-50' : ''}"></iconify-icon>
+						</div>
+					`
+				}));
+				return renderComponent(Button, {
+					variant: 'ghost',
+					class: '-ml-4 h-auto p-0 hover:bg-transparent font-medium',
+					onclick: column.getToggleSortingHandler(),
+					children: renderSnippet(headerSnippet)
 				});
 			},
 			cell: ({ row }) => {
@@ -336,6 +383,8 @@
 		},
 		{
 			id: 'actions',
+			enableSorting: false,
+			enableHiding: false,
 			cell: ({ row }) => {
 				const file = row.original;
 				return renderComponent(FileActionsMenu, {
@@ -405,7 +454,7 @@
 					{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
 						<Table.Row>
 							{#each headerGroup.headers as header (header.id)}
-								<Table.Head>
+								<Table.Head colspan={header.colSpan}>
 									{#if !header.isPlaceholder}
 										<FlexRender
 											content={header.column.columnDef.header}
@@ -419,7 +468,7 @@
 				</Table.Header>
 				<Table.Body>
 					{#each table.getRowModel().rows as row (row.id)}
-						<Table.Row>
+						<Table.Row data-state={row.getIsSelected() && 'selected'}>
 							{#each row.getVisibleCells() as cell (cell.id)}
 								<Table.Cell>
 									<FlexRender
