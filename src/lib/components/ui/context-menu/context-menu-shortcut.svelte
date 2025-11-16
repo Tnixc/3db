@@ -1,7 +1,7 @@
 <script lang="ts">
-	import type { WithElementRef } from 'bits-ui';
-	import type { HTMLAttributes } from 'svelte/elements';
-	import { cn } from '$lib/utils.js';
+	import type { WithElementRef } from "bits-ui";
+	import type { HTMLAttributes } from "svelte/elements";
+	import { cn } from "$lib/utils.js";
 
 	let {
 		ref = $bindable(null),
@@ -13,10 +13,8 @@
 
 <span
 	bind:this={ref}
-	class={cn('ml-auto text-xs tracking-widest text-muted-foreground', className)}
+	class={cn("text-muted-foreground ml-auto text-xs tracking-widest", className)}
 	{...restProps}
 >
-	{#if children}
-		{@render children()}
-	{/if}
+	{@render children?.()}
 </span>
