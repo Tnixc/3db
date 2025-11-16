@@ -1,23 +1,58 @@
 <script lang="ts">
-	// import FileBrowser from '$lib/components/file-browser.svelte';
-	import TokenLogin from '$lib/components/token-login.svelte';
-	import { authStore } from '$lib/stores/auth';
+	import FileBrowser from '$lib/components/file-browser.svelte';
+	import FileUploadDialog from '$lib/components/file-upload-dialog.svelte';
+	import { Button } from '$lib/components/ui/button';
+	import Icon from '@iconify/svelte';
+	import { currentRepository } from '$lib/stores/repositories';
 
-	let githubConfig = $derived.by(() => {
-		const state = $authStore;
-		if (state.status === 'ready') {
-			return { token: state.token, userEmail: state.user.email };
-		}
-		return null;
-	});
+	let currentPath = $state('');
+	let uploadDialogOpen = $state(false);
+
+	function handleNavigate(path: string) {
+		currentPath = path;
+	}
+
+	function handleUploadComplete() {
+		// Trigger re-render of file browser by updating the path
+		const temp = currentPath;
+		currentPath = '';
+		setTimeout(() => {
+			currentPath = temp;
+		}, 100);
+	}
 </script>
 
-<div class="container mx-auto p-4">
-	{#if $authStore.status === 'logged_out'}
-		<TokenLogin />
-	{:else if githubConfig}
-		<div class="space-y-4">
-			<!-- FileBrowser disabled - UI components removed -->
+<div class="flex h-full flex-col">
+	{#if $currentRepository}
+		<div class="mb-4 flex items-center justify-between">
+			<div>
+				<h1 class="text-2xl font-bold">File Browser</h1>
+				<p class="text-sm text-muted-foreground">
+					Browse and manage files in {$currentRepository.name}
+				</p>
+			</div>
+			<Button onclick={() => (uploadDialogOpen = true)}>
+				<Icon icon="lucide:upload" class="mr-2 size-4" />
+				Upload Files
+			</Button>
+		</div>
+
+		<FileBrowser bind:currentPath onNavigate={handleNavigate} />
+
+		<FileUploadDialog
+			bind:open={uploadDialogOpen}
+			{currentPath}
+			onUploadComplete={handleUploadComplete}
+		/>
+	{:else}
+		<div class="flex h-full items-center justify-center">
+			<div class="text-center">
+				<Icon icon="lucide:database" class="mx-auto mb-4 size-12 text-muted-foreground" />
+				<h2 class="mb-2 text-xl font-semibold">No Repository Selected</h2>
+				<p class="text-muted-foreground">
+					Select a repository from the sidebar or create a new one to get started
+				</p>
+			</div>
 		</div>
 	{/if}
 </div>

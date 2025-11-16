@@ -41,7 +41,8 @@
 		"vite": "^5.0.3"
 	},
 	"dependencies": {
-		"@sveltejs/adapter-vercel": "^5.4.7"
+		"@sveltejs/adapter-vercel": "^5.4.7",
+		"@tanstack/table-core": "^8.21.3"
 	},
 	"overrides": {
 		"string-width": "^4.2.3"
