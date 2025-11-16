@@ -16,6 +16,7 @@
 	import { authStore } from '$lib/stores/auth';
 	import { getContents, deleteFile, deleteFolder, createFile } from '$lib/services/github';
 	import FileActionsMenu from './file-actions-menu.svelte';
+	import SortableHeader from './sortable-header.svelte';
 
 	let {
 		currentPath = $bindable(''),
@@ -183,27 +184,9 @@
 		{
 			accessorKey: 'name',
 			header: ({ column }) => {
-				const isSorted = column.getIsSorted();
-				const icon = isSorted === 'asc'
-					? 'lucide:arrow-up'
-					: isSorted === 'desc'
-						? 'lucide:arrow-down'
-						: 'lucide:arrows-up-down';
-				const headerSnippet = createRawSnippet(() => {
-					return {
-						render: () => `
-							<div class="flex items-center gap-2">
-								<span>Name</span>
-								<iconify-icon icon="${icon}" class="size-4 ${!isSorted ? 'opacity-50' : ''}"></iconify-icon>
-							</div>
-						`
-					};
-				});
-				return renderComponent(Button, {
-					variant: 'ghost',
-					class: '-ml-4 h-auto p-0 hover:bg-transparent font-medium',
-					onclick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-					children: renderSnippet(headerSnippet, {})
+				return renderComponent(SortableHeader, {
+					column,
+					children: 'Name'
 				});
 			},
 			cell: ({ row }) => {
@@ -235,27 +218,9 @@
 		{
 			accessorKey: 'type',
 			header: ({ column }) => {
-				const isSorted = column.getIsSorted();
-				const icon = isSorted === 'asc'
-					? 'lucide:arrow-up'
-					: isSorted === 'desc'
-						? 'lucide:arrow-down'
-						: 'lucide:arrows-up-down';
-				const headerSnippet = createRawSnippet(() => {
-					return {
-						render: () => `
-							<div class="flex items-center gap-2">
-								<span>Type</span>
-								<iconify-icon icon="${icon}" class="size-4 ${!isSorted ? 'opacity-50' : ''}"></iconify-icon>
-							</div>
-						`
-					};
-				});
-				return renderComponent(Button, {
-					variant: 'ghost',
-					class: '-ml-4 h-auto p-0 hover:bg-transparent font-medium',
-					onclick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-					children: renderSnippet(headerSnippet, {})
+				return renderComponent(SortableHeader, {
+					column,
+					children: 'Type'
 				});
 			},
 			cell: ({ row }) => {
@@ -271,27 +236,10 @@
 		{
 			accessorKey: 'size',
 			header: ({ column }) => {
-				const isSorted = column.getIsSorted();
-				const icon = isSorted === 'asc'
-					? 'lucide:arrow-up'
-					: isSorted === 'desc'
-						? 'lucide:arrow-down'
-						: 'lucide:arrows-up-down';
-				const headerSnippet = createRawSnippet(() => {
-					return {
-						render: () => `
-							<div class="flex items-center justify-end gap-2 w-full">
-								<span>Size</span>
-								<iconify-icon icon="${icon}" class="size-4 ${!isSorted ? 'opacity-50' : ''}"></iconify-icon>
-							</div>
-						`
-					};
-				});
-				return renderComponent(Button, {
-					variant: 'ghost',
-					class: '-mr-4 h-auto p-0 hover:bg-transparent font-medium w-full',
-					onclick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
-					children: renderSnippet(headerSnippet, {})
+				return renderComponent(SortableHeader, {
+					column,
+					children: 'Size',
+					align: 'right'
 				});
 			},
 			cell: ({ row }) => {
