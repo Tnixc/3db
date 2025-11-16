@@ -1,5 +1,5 @@
 <script lang="ts">
-	import FileBrowser from '$lib/components/file-browser.svelte';
+	// import FileBrowser from '$lib/components/file-browser.svelte';
 	import TokenLogin from '$lib/components/token-login.svelte';
 	import { authStore } from '$lib/stores/auth';
 
@@ -17,7 +17,7 @@
 		<TokenLogin />
 	{:else if githubConfig}
 		<div class="space-y-4">
-			<FileBrowser config={githubConfig} />
+			<!-- FileBrowser disabled - UI components removed -->
 		</div>
 	{/if}
 </div>

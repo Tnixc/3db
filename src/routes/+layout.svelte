@@ -4,12 +4,12 @@
 	import { authStore, user } from '$lib/stores/auth';
 	import { initializeApp, resetInitialization } from '$lib/services/init';
 	import { currentRepository, repositories } from '$lib/stores/repositories';
-	import RepoContextMenu from '$lib/components/repo-context-menu.svelte';
-	import UserMenu from '$lib/components/user-menu.svelte';
-	import CreateRepoDialog from '$lib/components/create-repo-dialog.svelte';
-	import FileUploadDialog from '$lib/components/file-upload-dialog.svelte';
-	import * as Sidebar from '$lib/components/ui/sidebar';
-	import { Button } from '$lib/components/ui/button';
+	// import RepoContextMenu from '$lib/components/repo-context-menu.svelte';
+	// import UserMenu from '$lib/components/user-menu.svelte';
+	// import CreateRepoDialog from '$lib/components/create-repo-dialog.svelte';
+	// import FileUploadDialog from '$lib/components/file-upload-dialog.svelte';
+	// import * as Sidebar from '$lib/components/ui/sidebar';
+	// import { Button } from '$lib/components/ui/button';
 	import Icon from '@iconify/svelte';
 	import type { Snippet } from 'svelte';
 	import type { GitHubConfig } from '$lib/services/github';
@@ -78,72 +78,18 @@
 			<Icon icon="lucide:alert-circle" class="mx-auto mb-4 h-12 w-12 text-destructive" />
 			<h2 class="mb-2 text-xl font-semibold">Initialization Error</h2>
 			<p class="mb-4 text-muted-foreground">{$authStore.error}</p>
-			<Button onclick={() => window.location.reload()}>Retry</Button>
-			<Button variant="ghost" onclick={handleSignOut} class="ml-2">Logout</Button>
+			<button class="px-4 py-2 bg-primary text-primary-foreground rounded" onclick={() => window.location.reload()}>Retry</button>
+			<button class="ml-2 px-4 py-2 bg-transparent rounded" onclick={handleSignOut}>Logout</button>
 		</div>
 	</div>
 {:else if $authStore.status === 'ready'}
-	<Sidebar.Provider bind:open={sidebarOpen}>
-			<Sidebar.Root>
-				<Sidebar.Header>
-					{#if $user}
-						<UserMenu user={$user} onSignOut={handleSignOut} />
-					{/if}
-				</Sidebar.Header>
-
-				<Sidebar.Content>
-					{#if githubConfig}
-						<Sidebar.Group>
-							<Sidebar.GroupLabel>Repositories</Sidebar.GroupLabel>
-							<Sidebar.Menu>
-								{#each $repositories as repo}
-									<Sidebar.MenuItem>
-										<RepoContextMenu repository={repo} config={githubConfig}>
-											<Sidebar.MenuButton
-												class="relative whitespace-nowrap after:absolute after:right-0 after:h-full after:w-6 after:bg-gradient-to-r after:from-transparent after:to-sidebar"
-												isActive={$currentRepository?.id === repo.id}
-												onclick={() => currentRepository.set(repo)}
-											>
-												<Icon icon="lucide:database" class="mr-2 h-4 w-4" />
-												{repo.name}
-											</Sidebar.MenuButton>
-										</RepoContextMenu>
-									</Sidebar.MenuItem>
-								{/each}
-							</Sidebar.Menu>
-						</Sidebar.Group>
-					{/if}
-				</Sidebar.Content>
-
-				<Sidebar.Footer>
-					<Button
-						class="w-full"
-						onclick={() => (uploadDialogOpen = true)}
-						disabled={!$currentRepository}
-					>
-						<Icon icon="lucide:upload" class="mr-2 h-4 w-4" />
-						Upload File
-					</Button>
-					<Button variant="outline" size="sm" onclick={() => (createRepoDialogOpen = true)}>
-						<Icon icon="lucide:plus" class="mr-2 h-4 w-4" />
-						Link or Create Repo
-					</Button>
-				</Sidebar.Footer>
-			</Sidebar.Root>
-
-			<Sidebar.Inset>
-				{@render children()}
-
-				{#if githubConfig}
-					<CreateRepoDialog bind:open={createRepoDialogOpen} config={githubConfig} />
-
-					<FileUploadDialog
-						bind:open={uploadDialogOpen}
-						config={githubConfig}
-						{currentPath}
-						onUploadComplete={loadCurrentDirectory}
-					/>
-				{/if}
-			</Sidebar.Inset>
-	</Sidebar.Provider>
+	<div class="flex h-screen items-center justify-center">
+		<div class="text-center">
+			<h2 class="mb-2 text-xl font-semibold">App Ready</h2>
+			<p class="mb-4 text-muted-foreground">UI components have been removed. Please reinstall shadcn-svelte components.</p>
+			<p class="text-sm text-muted-foreground">User: {$user?.login}</p>
+			<p class="text-sm text-muted-foreground">Repositories: {$repositories.length}</p>
+			<button class="mt-4 px-4 py-2 bg-transparent rounded" onclick={handleSignOut}>Logout</button>
+		</div>
+	</div>
 {/if}
