@@ -155,6 +155,13 @@ export async function updateServiceConfig(
 	const serviceRepo = repos.find((repo) => repo.name === SERVICE_REPO_PATH);
 	if (!serviceRepo) throw new Error('Service repository not found');
 
+	// Ensure 3db-service is always in the connectedRepos list
+	const serviceRepoFullName = serviceRepo.full_name;
+	if (!serviceConfig.connectedRepos.includes(serviceRepoFullName)) {
+		serviceConfig.connectedRepos.unshift(serviceRepoFullName);
+		console.log('Ensured 3db-service is in connected repos list');
+	}
+
 	try {
 		// Get current file contents to get the SHA
 		const contents = await github.getContents(
@@ -200,13 +207,31 @@ export async function validateAndCleanConnectedRepos(
 	connectedRepos: string[]
 ): Promise<string[]> {
 	const validRepos: string[] = [];
+	let serviceRepoFullName: string | null = null;
 
 	for (const repoFullName of connectedRepos) {
 		const [owner, repo] = repoFullName.split('/');
+
+		// Track the service repo
+		if (repo === SERVICE_REPO_PATH) {
+			serviceRepoFullName = repoFullName;
+		}
+
 		if (await github.checkRepo(config, owner, repo)) {
 			validRepos.push(repoFullName);
 		} else {
 			console.log(`Repository ${repoFullName} no longer exists, removing from config`);
+		}
+	}
+
+	// Ensure 3db-service is always included if not already present
+	if (!serviceRepoFullName) {
+		const repos = await github.getRepositories(config);
+		const serviceRepo = repos.find((r) => r.name === SERVICE_REPO_PATH);
+		if (serviceRepo) {
+			serviceRepoFullName = serviceRepo.full_name;
+			validRepos.unshift(serviceRepoFullName);
+			console.log('Added 3db-service repository to connected repos (was missing)');
 		}
 	}
 
