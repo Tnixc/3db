@@ -168,10 +168,10 @@
 	});
 </script>
 
-<div class="space-y-4">
-	<div class="flex items-center justify-between gap-4">
-		<div class="flex items-center gap-2">
-			<Tooltip.Provider>
+<Tooltip.Provider>
+	<div class="space-y-4">
+		<div class="flex items-center justify-between gap-4">
+			<div class="flex items-center gap-2">
 				<Tooltip.Root>
 					<Tooltip.Trigger asChild let:builder>
 						<Button builders={[builder]} variant="ghost" size="icon" onclick={sidebar.toggle}>
@@ -183,7 +183,6 @@
 						<p>Toggle Sidebar</p>
 					</Tooltip.Content>
 				</Tooltip.Root>
-			</Tooltip.Provider>
 
 			{#if $currentRepository}
 				{#each getBreadcrumbs() as crumb, i}
@@ -285,8 +284,7 @@
 								<div class="flex items-center justify-end gap-1">
 									{#if item.type === 'file'}
 										<!-- Open in New Tab -->
-										<Tooltip.Provider>
-											<Tooltip.Root>
+										<Tooltip.Root>
 												<Tooltip.Trigger asChild let:builder>
 													<Button
 														builders={[builder]}
@@ -305,11 +303,9 @@
 													<p>Open in new tab</p>
 												</Tooltip.Content>
 											</Tooltip.Root>
-										</Tooltip.Provider>
 
 										<!-- Copy Link -->
-										<Tooltip.Provider>
-											<Tooltip.Root>
+										<Tooltip.Root>
 												<Tooltip.Trigger asChild let:builder>
 													<Button
 														builders={[builder]}
@@ -330,11 +326,9 @@
 													<p>Copy link</p>
 												</Tooltip.Content>
 											</Tooltip.Root>
-										</Tooltip.Provider>
 
 										<!-- Copy Contents -->
-										<Tooltip.Provider>
-											<Tooltip.Root>
+										<Tooltip.Root>
 												<Tooltip.Trigger asChild let:builder>
 													<Button
 														builders={[builder]}
@@ -355,11 +349,9 @@
 													<p>Copy file contents</p>
 												</Tooltip.Content>
 											</Tooltip.Root>
-										</Tooltip.Provider>
 
 										<!-- Download -->
-										<Tooltip.Provider>
-											<Tooltip.Root>
+										<Tooltip.Root>
 												<Tooltip.Trigger asChild let:builder>
 													<Button
 														builders={[builder]}
@@ -375,12 +367,10 @@
 													<p>Download file</p>
 												</Tooltip.Content>
 											</Tooltip.Root>
-										</Tooltip.Provider>
 									{/if}
 
 									<!-- Delete -->
-									<Tooltip.Provider>
-										<Tooltip.Root>
+									<Tooltip.Root>
 											<Tooltip.Trigger asChild let:builder>
 												<Button
 													builders={[builder]}
@@ -397,7 +387,6 @@
 												<p>Delete {item.type === 'dir' ? 'folder' : 'file'}</p>
 											</Tooltip.Content>
 										</Tooltip.Root>
-									</Tooltip.Provider>
 								</div>
 							</td>
 						</tr>
@@ -406,4 +395,5 @@
 			</table>
 		</div>
 	{/if}
-</div>
+	</div>
+</Tooltip.Provider>
