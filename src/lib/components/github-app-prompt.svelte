@@ -3,8 +3,9 @@
 	import Icon from '@iconify/svelte';
 	import * as Card from '$lib/components/ui/card/index.js';
 
-	let { installationUrl } = $props<{
+	let { installationUrl, onRefresh } = $props<{
 		installationUrl: string;
+		onRefresh?: () => void;
 	}>();
 </script>
 
@@ -38,10 +39,18 @@
 							repos.
 						</p>
 					</div>
-					<Button onclick={() => (window.location.href = installationUrl)} class="w-fit">
-						<Icon icon="lucide:arrow-right" class="mr-2 h-4 w-4" />
-						Install GitHub App
-					</Button>
+					<div class="flex gap-2">
+						<Button onclick={() => (window.location.href = installationUrl)} class="w-fit">
+							<Icon icon="lucide:arrow-right" class="mr-2 h-4 w-4" />
+							Install GitHub App
+						</Button>
+						{#if onRefresh}
+							<Button variant="outline" onclick={onRefresh} class="w-fit">
+								<Icon icon="lucide:refresh-cw" class="mr-2 h-4 w-4" />
+								I've Installed It
+							</Button>
+						{/if}
+					</div>
 				</div>
 			</Card.Footer>
 		</Card.Content>

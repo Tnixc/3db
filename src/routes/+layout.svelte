@@ -2,7 +2,7 @@
 	import '../app.css';
 	import { onMount } from 'svelte';
 	import { authStore, user } from '$lib/stores/auth';
-	import { initializeApp, resetInitialization } from '$lib/services/init';
+	import { initializeApp, resetInitialization, recheckInstallation } from '$lib/services/init';
 	import { PUBLIC_GITHUB_APP_NAME } from '$env/static/public';
 	import { currentRepository, repositories } from '$lib/stores/repositories';
 	import RepoContextMenu from '$lib/components/repo-context-menu.svelte';
@@ -53,6 +53,13 @@
 	async function loadCurrentDirectory() {
 		// Placeholder for future implementation
 	}
+
+	async function handleRefreshInstallation() {
+		const state = $authStore;
+		if (state.status === 'ready') {
+			await recheckInstallation(state.token);
+		}
+	}
 </script>
 
 {#if $authStore.status === 'logged_out' || $authStore.status === 'logging_in'}
@@ -86,6 +93,7 @@
 	{#if !$authStore.hasGithubApp}
 		<GithubAppPrompt
 			installationUrl={`https://github.com/apps/${PUBLIC_GITHUB_APP_NAME}/installations/new`}
+			onRefresh={handleRefreshInstallation}
 		/>
 	{:else}
 		<Sidebar.Provider bind:open={sidebarOpen}>

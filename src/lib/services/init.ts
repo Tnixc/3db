@@ -78,6 +78,25 @@ async function checkGithubAppInstallation(token: string): Promise<boolean> {
 }
 
 /**
+ * Recheck GitHub App installation status
+ * Called when user clicks "I've Installed It" after installing the app
+ */
+export async function recheckInstallation(token: string): Promise<boolean> {
+	console.log('[Init] Rechecking GitHub App installation...');
+	const hasGithubApp = await checkGithubAppInstallation(token);
+
+	if (hasGithubApp) {
+		console.log('[Init] GitHub App is now installed! Updating state...');
+		// Update the auth state to mark app as installed
+		authStore.setReady(true);
+	} else {
+		console.log('[Init] GitHub App still not detected');
+	}
+
+	return hasGithubApp;
+}
+
+/**
  * Reset initialization state (for logout)
  */
 export function resetInitialization() {
