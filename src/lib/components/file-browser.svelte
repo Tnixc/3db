@@ -15,7 +15,7 @@
 	import { renderSnippet, renderComponent } from '$lib/components/ui/data-table/index.js';
 	import { currentRepository } from '$lib/stores/repositories';
 	import { authStore } from '$lib/stores/auth';
-	import { getContents, deleteFile, deleteFolder } from '$lib/services/github';
+	import { getContents, deleteFile, deleteFolder, createFile } from '$lib/services/github';
 
 	let {
 		currentPath = $bindable(''),
@@ -111,6 +111,66 @@
 		}
 	}
 
+	async function copyContents(file: FileContent) {
+		if (file.type === 'dir') return;
+
+		try {
+			const response = await fetch(file.download_url);
+			const content = await response.text();
+			await navigator.clipboard.writeText(content);
+		} catch (err) {
+			console.error('Failed to copy contents:', err);
+			alert('Failed to copy file contents');
+		}
+	}
+
+	async function handleRename(file: FileContent) {
+		const newName = prompt(`Rename ${file.type === 'dir' ? 'folder' : 'file'}:`, file.name);
+		if (!newName || newName === file.name) return;
+
+		if (!$currentRepository || $authStore.status !== 'ready') return;
+
+		try {
+			const config = { token: $authStore.token, userEmail: $authStore.user.email };
+			const pathParts = file.path.split('/');
+			pathParts[pathParts.length - 1] = newName;
+			const newPath = pathParts.join('/');
+
+			if (file.type === 'file') {
+				// For files: download content, create new file, delete old file
+				const response = await fetch(file.download_url);
+				const content = await response.text();
+
+				await createFile(
+					config,
+					$currentRepository.owner.login,
+					$currentRepository.name,
+					newPath,
+					content,
+					`Rename ${file.name} to ${newName}`
+				);
+
+				await deleteFile(
+					config,
+					$currentRepository.owner.login,
+					$currentRepository.name,
+					file.path,
+					file.sha,
+					`Rename ${file.name} to ${newName}`
+				);
+			} else {
+				// For folders: need to recursively move all contents
+				alert('Folder renaming is not yet supported. Please use GitHub web interface.');
+				return;
+			}
+
+			await loadFiles();
+		} catch (err) {
+			console.error('Failed to rename:', err);
+			alert('Failed to rename item');
+		}
+	}
+
 	function formatBytes(bytes: number): string {
 		if (bytes === 0) return '0 B';
 		const k = 1024;
@@ -151,12 +211,19 @@
 		},
 		{
 			accessorKey: 'size',
-			header: 'Size',
+			header: () => {
+				const headerSnippet = createRawSnippet(() => {
+					return {
+						render: () => `<div class="text-right">Size</div>`
+					};
+				});
+				return renderSnippet(headerSnippet, {});
+			},
 			cell: ({ row }) => {
 				const sizeSnippet = createRawSnippet<[{ size: string }]>((getSize) => {
 					const { size } = getSize();
 					return {
-						render: () => `<div class="text-muted-foreground">${size}</div>`
+						render: () => `<div class="text-right text-muted-foreground">${size}</div>`
 					};
 				});
 				return renderSnippet(sizeSnippet, {
@@ -195,18 +262,23 @@
 										file.type === 'file'
 											? renderComponent(DropdownMenu.Item, {
 													onclick: () => copyLink(file),
-													children: 'Copy CDN Link'
+													children: 'Copy Link'
 												})
 											: null,
 										file.type === 'file'
 											? renderComponent(DropdownMenu.Item, {
-													onclick: () => window.open(file.download_url, '_blank'),
-													children: 'Download'
+													onclick: () => copyContents(file),
+													children: 'Copy Contents'
 												})
 											: null,
 										file.type === 'file' || file.type === 'dir'
 											? renderComponent(DropdownMenu.Separator, {})
 											: null,
+										renderComponent(DropdownMenu.Item, {
+											onclick: () => handleRename(file),
+											children: 'Rename'
+										}),
+										renderComponent(DropdownMenu.Separator, {}),
 										renderComponent(DropdownMenu.Item, {
 											onclick: () => handleDelete(file),
 											class: 'text-destructive',
@@ -247,15 +319,21 @@
 </script>
 
 <div class="flex h-full flex-col">
-	{#if currentPath}
-		<div class="mb-2 flex items-center gap-2">
-			<Button variant="ghost" size="sm" onclick={goUp}>
-				<Icon icon="lucide:arrow-left" class="mr-2 size-4" />
-				Back
-			</Button>
-			<span class="text-sm text-muted-foreground">/{currentPath}</span>
+	<div class="mb-2 flex items-center justify-between gap-2">
+		<div class="flex items-center gap-2">
+			{#if currentPath}
+				<Button variant="ghost" size="sm" onclick={goUp}>
+					<Icon icon="lucide:arrow-left" class="mr-2 size-4" />
+					Back
+				</Button>
+				<span class="text-sm text-muted-foreground">/{currentPath}</span>
+			{/if}
 		</div>
-	{/if}
+		<Button variant="ghost" size="sm" onclick={loadFiles} disabled={loading}>
+			<Icon icon="lucide:refresh-cw" class={`mr-2 size-4 ${loading ? 'animate-spin' : ''}`} />
+			Refresh
+		</Button>
+	</div>
 
 	{#if loading}
 		<div class="flex h-64 items-center justify-center">
