@@ -16,6 +16,8 @@
 	import { authStore } from '$lib/stores/auth';
 	import { getContents, deleteFile, deleteFolder, createFile } from '$lib/services/github';
 	import FileActionsMenu from './file-actions-menu.svelte';
+	import DataTableSortButton from './data-table-sort-button.svelte';
+	import DataTableNameCell from './data-table-name-cell.svelte';
 
 	let {
 		currentPath = $bindable(''),
@@ -234,67 +236,24 @@
 		{
 			accessorKey: 'name',
 			header: ({ column }) => {
-				const isSorted = column.getIsSorted();
-				const icon = isSorted === 'asc' ? 'lucide:arrow-up' : isSorted === 'desc' ? 'lucide:arrow-down' : 'lucide:arrows-up-down';
-				const headerSnippet = createRawSnippet(() => ({
-					render: () => `
-						<div class="flex items-center gap-2">
-							<span>Name</span>
-							<iconify-icon icon="${icon}" class="size-4 ${!isSorted ? 'opacity-50' : ''}"></iconify-icon>
-						</div>
-					`
-				}));
-				return renderComponent(Button, {
-					variant: 'ghost',
-					class: '-ml-4 h-auto p-0 hover:bg-transparent font-medium',
-					onclick: column.getToggleSortingHandler(),
-					children: renderSnippet(headerSnippet)
+				return renderComponent(DataTableSortButton, {
+					column,
+					children: 'Name'
 				});
 			},
 			cell: ({ row }) => {
-				const file = row.original;
-				const nameSnippet = createRawSnippet<[{ file: FileContent }]>((getFile) => {
-					const { file } = getFile();
-					const icon = file.type === 'dir' ? 'lucide:folder' : 'lucide:file';
-					const clickHandler = file.type === 'dir' ? `onclick="event.target.closest('button').click()"` : '';
-					return {
-						render: () => `
-							<div class="flex items-center gap-2">
-								<iconify-icon icon="${icon}" class="size-4"></iconify-icon>
-								<span ${clickHandler}>${file.name}</span>
-							</div>
-						`
-					};
+				return renderComponent(DataTableNameCell, {
+					file: row.original,
+					onNavigate: navigateTo
 				});
-				if (file.type === 'dir') {
-					return renderComponent(Button, {
-						variant: 'ghost',
-						class: 'h-auto p-0 hover:bg-transparent',
-						onclick: () => navigateTo(file.path),
-						children: renderSnippet(nameSnippet, { file })
-					});
-				}
-				return renderSnippet(nameSnippet, { file });
 			}
 		},
 		{
 			accessorKey: 'type',
 			header: ({ column }) => {
-				const isSorted = column.getIsSorted();
-				const icon = isSorted === 'asc' ? 'lucide:arrow-up' : isSorted === 'desc' ? 'lucide:arrow-down' : 'lucide:arrows-up-down';
-				const headerSnippet = createRawSnippet(() => ({
-					render: () => `
-						<div class="flex items-center gap-2">
-							<span>Type</span>
-							<iconify-icon icon="${icon}" class="size-4 ${!isSorted ? 'opacity-50' : ''}"></iconify-icon>
-						</div>
-					`
-				}));
-				return renderComponent(Button, {
-					variant: 'ghost',
-					class: '-ml-4 h-auto p-0 hover:bg-transparent font-medium',
-					onclick: column.getToggleSortingHandler(),
-					children: renderSnippet(headerSnippet)
+				return renderComponent(DataTableSortButton, {
+					column,
+					children: 'Type'
 				});
 			},
 			cell: ({ row }) => {
@@ -310,21 +269,9 @@
 		{
 			accessorKey: 'size',
 			header: ({ column }) => {
-				const isSorted = column.getIsSorted();
-				const icon = isSorted === 'asc' ? 'lucide:arrow-up' : isSorted === 'desc' ? 'lucide:arrow-down' : 'lucide:arrows-up-down';
-				const headerSnippet = createRawSnippet(() => ({
-					render: () => `
-						<div class="flex items-center gap-2">
-							<span>Size</span>
-							<iconify-icon icon="${icon}" class="size-4 ${!isSorted ? 'opacity-50' : ''}"></iconify-icon>
-						</div>
-					`
-				}));
-				return renderComponent(Button, {
-					variant: 'ghost',
-					class: '-ml-4 h-auto p-0 hover:bg-transparent font-medium',
-					onclick: column.getToggleSortingHandler(),
-					children: renderSnippet(headerSnippet)
+				return renderComponent(DataTableSortButton, {
+					column,
+					children: 'Size'
 				});
 			},
 			cell: ({ row }) => {
@@ -347,21 +294,9 @@
 		{
 			accessorKey: 'last_modified',
 			header: ({ column }) => {
-				const isSorted = column.getIsSorted();
-				const icon = isSorted === 'asc' ? 'lucide:arrow-up' : isSorted === 'desc' ? 'lucide:arrow-down' : 'lucide:arrows-up-down';
-				const headerSnippet = createRawSnippet(() => ({
-					render: () => `
-						<div class="flex items-center gap-2">
-							<span>Last Updated</span>
-							<iconify-icon icon="${icon}" class="size-4 ${!isSorted ? 'opacity-50' : ''}"></iconify-icon>
-						</div>
-					`
-				}));
-				return renderComponent(Button, {
-					variant: 'ghost',
-					class: '-ml-4 h-auto p-0 hover:bg-transparent font-medium',
-					onclick: column.getToggleSortingHandler(),
-					children: renderSnippet(headerSnippet)
+				return renderComponent(DataTableSortButton, {
+					column,
+					children: 'Last Updated'
 				});
 			},
 			cell: ({ row }) => {
