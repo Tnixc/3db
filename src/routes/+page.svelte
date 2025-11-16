@@ -2,7 +2,6 @@
 	import FileBrowser from '$lib/components/file-browser.svelte';
 	import FileUploadDialog from '$lib/components/file-upload-dialog.svelte';
 	import TokenLogin from '$lib/components/token-login.svelte';
-	import { Button } from '$lib/components/ui/button';
 	import Icon from '@iconify/svelte';
 	import { currentRepository } from '$lib/stores/repositories';
 	import { authStore } from '$lib/stores/auth';
@@ -27,20 +26,11 @@
 {#if $authStore.status === 'logged_out' || $authStore.status === 'logging_in'}
 	<TokenLogin />
 {:else if $currentRepository}
-	<div class="mb-4 flex items-center justify-between">
-		<div>
-			<h1 class="text-2xl font-bold">File Browser</h1>
-			<p class="text-sm text-muted-foreground">
-				Browse and manage files in {$currentRepository.name}
-			</p>
-		</div>
-		<Button onclick={() => (uploadDialogOpen = true)}>
-			<Icon icon="lucide:upload" class="mr-2 size-4" />
-			Upload Files
-		</Button>
-	</div>
-
-	<FileBrowser bind:currentPath onNavigate={handleNavigate} />
+	<FileBrowser
+		bind:currentPath
+		onNavigate={handleNavigate}
+		onUpload={() => (uploadDialogOpen = true)}
+	/>
 
 	<FileUploadDialog
 		bind:open={uploadDialogOpen}

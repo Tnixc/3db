@@ -16,14 +16,17 @@
 	import { authStore } from '$lib/stores/auth';
 	import { getContents, deleteFile, deleteFolder, createFile } from '$lib/services/github';
 	import FileActionsMenu from './file-actions-menu.svelte';
-	import SortableHeader from './sortable-header.svelte';
+	import DataTableSortButton from './data-table-sort-button.svelte';
+	import DataTableNameCell from './data-table-name-cell.svelte';
 
 	let {
 		currentPath = $bindable(''),
-		onNavigate
+		onNavigate,
+		onUpload
 	}: {
 		currentPath?: string;
 		onNavigate?: (path: string) => void;
+		onUpload?: () => void;
 	} = $props();
 
 	let files = $state<FileContent[]>([]);
@@ -235,41 +238,22 @@
 		{
 			accessorKey: 'name',
 			header: ({ column }) => {
-				return renderComponent(SortableHeader, {
+				return renderComponent(DataTableSortButton, {
 					column,
 					children: 'Name'
 				});
 			},
 			cell: ({ row }) => {
-				const file = row.original;
-				const nameSnippet = createRawSnippet<[{ file: FileContent }]>((getFile) => {
-					const { file } = getFile();
-					const icon = file.type === 'dir' ? 'lucide:folder' : 'lucide:file';
-					const clickHandler = file.type === 'dir' ? `onclick="event.target.closest('button').click()"` : '';
-					return {
-						render: () => `
-							<div class="flex items-center gap-2">
-								<iconify-icon icon="${icon}" class="size-4"></iconify-icon>
-								<span ${clickHandler}>${file.name}</span>
-							</div>
-						`
-					};
+				return renderComponent(DataTableNameCell, {
+					file: row.original,
+					onNavigate: navigateTo
 				});
-				if (file.type === 'dir') {
-					return renderComponent(Button, {
-						variant: 'ghost',
-						class: 'h-auto p-0 hover:bg-transparent',
-						onclick: () => navigateTo(file.path),
-						children: renderSnippet(nameSnippet, { file })
-					});
-				}
-				return renderSnippet(nameSnippet, { file });
 			}
 		},
 		{
 			accessorKey: 'type',
 			header: ({ column }) => {
-				return renderComponent(SortableHeader, {
+				return renderComponent(DataTableSortButton, {
 					column,
 					children: 'Type'
 				});
@@ -287,7 +271,7 @@
 		{
 			accessorKey: 'size',
 			header: ({ column }) => {
-				return renderComponent(SortableHeader, {
+				return renderComponent(DataTableSortButton, {
 					column,
 					children: 'Size'
 				});
@@ -312,7 +296,7 @@
 		{
 			accessorKey: 'last_modified',
 			header: ({ column }) => {
-				return renderComponent(SortableHeader, {
+				return renderComponent(DataTableSortButton, {
 					column,
 					children: 'Last Updated'
 				});
@@ -336,6 +320,8 @@
 		},
 		{
 			id: 'actions',
+			enableSorting: false,
+			enableHiding: false,
 			cell: ({ row }) => {
 				const file = row.original;
 				return renderComponent(FileActionsMenu, {
@@ -378,16 +364,24 @@
 		<div class="flex items-center gap-2">
 			{#if currentPath}
 				<Button variant="ghost" size="sm" onclick={goUp}>
-					<Icon icon="lucide:arrow-left" class="mr-2 size-4" />
+					<Icon icon="lucide:arrow-left" class="mr-2 size-4 shrink-0" />
 					Back
 				</Button>
 				<span class="text-sm text-muted-foreground">/{currentPath}</span>
 			{/if}
 		</div>
-		<Button variant="ghost" size="sm" onclick={loadFiles} disabled={loading}>
-			<Icon icon="lucide:refresh-cw" class={`mr-2 size-4 ${loading ? 'animate-spin' : ''}`} />
-			Refresh
-		</Button>
+		<div class="flex items-center gap-2">
+			<Button variant="ghost" size="sm" onclick={loadFiles} disabled={loading}>
+				<Icon icon="lucide:refresh-cw" class="mr-2 size-4 shrink-0 {loading ? 'animate-spin' : ''}" />
+				Refresh
+			</Button>
+			{#if onUpload}
+				<Button size="sm" onclick={onUpload}>
+					<Icon icon="lucide:upload" class="mr-2 size-4 shrink-0" />
+					Upload Files
+				</Button>
+			{/if}
+		</div>
 	</div>
 
 	{#if loading}
@@ -403,9 +397,9 @@
 			<Table.Root>
 				<Table.Header>
 					{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
-						<Table.Row>
+						<Table.Row class="p-4">
 							{#each headerGroup.headers as header (header.id)}
-								<Table.Head>
+								<Table.Head colspan={header.colSpan} class="translate-x-4">
 									{#if !header.isPlaceholder}
 										<FlexRender
 											content={header.column.columnDef.header}
@@ -419,7 +413,7 @@
 				</Table.Header>
 				<Table.Body>
 					{#each table.getRowModel().rows as row (row.id)}
-						<Table.Row>
+						<Table.Row data-state={row.getIsSelected() && 'selected'}>
 							{#each row.getVisibleCells() as cell (cell.id)}
 								<Table.Cell>
 									<FlexRender

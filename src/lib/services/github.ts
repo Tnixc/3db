@@ -199,8 +199,11 @@ export async function deleteFolder(
 ): Promise<void> {
 	const contents = await getContents(config, owner, repo, path);
 
+	// Normalize to array (GitHub returns object for single file, array for directory)
+	const contentsArray = Array.isArray(contents) ? contents : [contents];
+
 	// Recursively delete all contents
-	for (const item of contents) {
+	for (const item of contentsArray) {
 		if (item.type === 'dir') {
 			await deleteFolder(config, owner, repo, item.path);
 		} else {
