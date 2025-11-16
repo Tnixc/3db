@@ -26,17 +26,14 @@ export async function initializeApp(token: string, userLogin: string, userEmail:
 		try {
 			const config: GitHubConfig = { token, userEmail };
 
-			console.log('[Init] Step 1: Checking GitHub App installation');
-			const hasGithubApp = await checkGithubAppInstallation(token);
-
-			console.log('[Init] Step 2: Initializing service repository');
+			console.log('[Init] Step 1: Initializing service repository');
 			await service.initializeServiceRepo(config);
 
-			console.log('[Init] Step 3: Loading service config');
+			console.log('[Init] Step 2: Loading service config');
 			const config_data = await service.getServiceConfig(config);
 			serviceConfig.set(config_data);
 
-			console.log('[Init] Step 4: Loading repositories');
+			console.log('[Init] Step 3: Loading repositories');
 			const allRepos = await github.getRepositories(config);
 			const connectedRepos = allRepos.filter((repo) =>
 				config_data.connectedRepos.includes(repo.full_name)
@@ -44,7 +41,7 @@ export async function initializeApp(token: string, userLogin: string, userEmail:
 			repositories.set(connectedRepos);
 
 			console.log('[Init] Complete! Setting ready state');
-			authStore.setReady(hasGithubApp);
+			authStore.setReady(); // With PAT, we have all permissions we need
 		} catch (error) {
 			console.error('[Init] Error during initialization:', error);
 			authStore.setError(error instanceof Error ? error.message : 'Initialization failed');
@@ -56,44 +53,6 @@ export async function initializeApp(token: string, userLogin: string, userEmail:
 	})();
 
 	return initializationPromise;
-}
-
-async function checkGithubAppInstallation(token: string): Promise<boolean> {
-	try {
-		const response = await fetch('/api/github/check-installation', {
-			headers: {
-				'Content-Type': 'application/json',
-				Authorization: `Bearer ${token}`
-			}
-		});
-
-		if (!response.ok) return false;
-
-		const { installed } = await response.json();
-		return installed;
-	} catch (error) {
-		console.error('[Init] Error checking GitHub app installation:', error);
-		return false;
-	}
-}
-
-/**
- * Recheck GitHub App installation status
- * Called when user clicks "I've Installed It" after installing the app
- */
-export async function recheckInstallation(token: string): Promise<boolean> {
-	console.log('[Init] Rechecking GitHub App installation...');
-	const hasGithubApp = await checkGithubAppInstallation(token);
-
-	if (hasGithubApp) {
-		console.log('[Init] GitHub App is now installed! Updating state...');
-		// Update the auth state to mark app as installed
-		authStore.setReady(true);
-	} else {
-		console.log('[Init] GitHub App still not detected');
-	}
-
-	return hasGithubApp;
 }
 
 /**

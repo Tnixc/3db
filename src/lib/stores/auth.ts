@@ -16,7 +16,7 @@ export type AuthState =
 	| { status: 'logging_in' }
 	| { status: 'logged_in'; token: string; user: GitHubUser }
 	| { status: 'initializing'; token: string; user: GitHubUser }
-	| { status: 'ready'; token: string; user: GitHubUser; hasGithubApp: boolean }
+	| { status: 'ready'; token: string; user: GitHubUser }
 	| { status: 'error'; error: string; token: string; user: GitHubUser };
 
 function createAuthStore() {
@@ -68,10 +68,10 @@ function createAuthStore() {
 			});
 		},
 
-		setReady(hasGithubApp: boolean) {
+		setReady() {
 			update(state => {
 				if (state.status === 'initializing' || state.status === 'logged_in') {
-					return { ...state, status: 'ready', hasGithubApp };
+					return { ...state, status: 'ready' };
 				}
 				return state;
 			});

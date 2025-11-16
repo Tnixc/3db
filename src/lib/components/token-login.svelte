@@ -67,10 +67,10 @@
 				After logging in
 			</h3>
 			<ol class="list-inside list-decimal space-y-1 text-sm text-blue-600 dark:text-blue-400">
-				<li>Initial setup may take 15-30 seconds (creating service repository)</li>
-				<li>You'll be prompted to install the 3db GitHub App</li>
-				<li>After installing the app, return to this page to continue</li>
-				<li>Refresh if repositories don't load immediately</li>
+				<li>Initial setup may take 15-30 seconds</li>
+				<li>A repository called '3db-service' will be created to store metadata</li>
+				<li>You'll see a loading screen while we set everything up</li>
+				<li>Once ready, you can start managing your repositories!</li>
 			</ol>
 		</div>
 

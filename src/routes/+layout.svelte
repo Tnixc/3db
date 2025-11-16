@@ -2,14 +2,12 @@
 	import '../app.css';
 	import { onMount } from 'svelte';
 	import { authStore, user } from '$lib/stores/auth';
-	import { initializeApp, resetInitialization, recheckInstallation } from '$lib/services/init';
-	import { PUBLIC_GITHUB_APP_NAME } from '$env/static/public';
+	import { initializeApp, resetInitialization } from '$lib/services/init';
 	import { currentRepository, repositories } from '$lib/stores/repositories';
 	import RepoContextMenu from '$lib/components/repo-context-menu.svelte';
 	import UserMenu from '$lib/components/user-menu.svelte';
 	import CreateRepoDialog from '$lib/components/create-repo-dialog.svelte';
 	import FileUploadDialog from '$lib/components/file-upload-dialog.svelte';
-	import GithubAppPrompt from '$lib/components/github-app-prompt.svelte';
 	import * as Sidebar from '$lib/components/ui/sidebar';
 	import { Button } from '$lib/components/ui/button';
 	import Icon from '@iconify/svelte';
@@ -53,13 +51,6 @@
 	async function loadCurrentDirectory() {
 		// Placeholder for future implementation
 	}
-
-	async function handleRefreshInstallation() {
-		const state = $authStore;
-		if (state.status === 'ready') {
-			await recheckInstallation(state.token);
-		}
-	}
 </script>
 
 {#if $authStore.status === 'logged_out' || $authStore.status === 'logging_in'}
@@ -90,13 +81,7 @@
 		</div>
 	</div>
 {:else if $authStore.status === 'ready'}
-	{#if !$authStore.hasGithubApp}
-		<GithubAppPrompt
-			installationUrl={`https://github.com/apps/${PUBLIC_GITHUB_APP_NAME}/installations/new`}
-			onRefresh={handleRefreshInstallation}
-		/>
-	{:else}
-		<Sidebar.Provider bind:open={sidebarOpen}>
+	<Sidebar.Provider bind:open={sidebarOpen}>
 			<Sidebar.Root>
 				<Sidebar.Header>
 					{#if $user}
@@ -158,6 +143,5 @@
 					/>
 				{/if}
 			</Sidebar.Inset>
-		</Sidebar.Provider>
-	{/if}
+	</Sidebar.Provider>
 {/if}
