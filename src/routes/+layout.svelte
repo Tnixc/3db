@@ -66,66 +66,57 @@
 	</div>
 {:else if $authStore.status === 'ready'}
 	<div class="flex h-screen overflow-hidden">
-		<!-- Sidebar -->
-		{#if sidebarOpen}
-			<aside class="flex w-64 flex-col border-r bg-background">
-				<!-- Sidebar Header -->
-				<div class="flex h-14 items-center justify-between border-b px-4">
-					<h2 class="text-lg font-semibold">3db</h2>
-					<UserMenu onSignOut={handleSignOut} />
-				</div>
+		<!-- Sidebar - Always visible -->
+		<aside class="flex w-64 flex-col border-r bg-background">
+			<!-- Sidebar Header -->
+			<div class="flex h-14 items-center justify-between border-b px-4">
+				<h2 class="text-lg font-semibold">3db</h2>
+				<UserMenu onSignOut={handleSignOut} />
+			</div>
 
-				<!-- Repositories List -->
-				<ScrollArea.Root class="flex-1">
-					<div class="p-4">
-						<div class="mb-2 flex items-center justify-between">
-							<h3 class="text-sm font-medium text-muted-foreground">Repositories</h3>
-						</div>
-						<div class="space-y-1">
-							{#each $repositories as repo (repo.id)}
-								<div class="group relative">
-									<Button
-										variant={$currentRepository?.id === repo.id ? 'secondary' : 'ghost'}
-										class="w-full justify-start"
-										onclick={() => currentRepository.set(repo)}
-									>
-										<Icon icon="lucide:database" class="mr-2 size-4" />
-										<span class="flex-1 truncate text-left">{repo.name}</span>
-									</Button>
-									<div class="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100">
-										<RepoContextMenu {repo} />
-									</div>
-								</div>
-							{:else}
-								<p class="py-8 text-center text-sm text-muted-foreground">
-									No repositories yet
-								</p>
-							{/each}
-						</div>
+			<!-- Repositories List -->
+			<ScrollArea.Root class="flex-1">
+				<div class="p-4">
+					<div class="mb-2 flex items-center justify-between">
+						<h3 class="text-sm font-medium text-muted-foreground">Repositories</h3>
 					</div>
-				</ScrollArea.Root>
-
-				<!-- Sidebar Footer -->
-				<div class="border-t p-4">
-					<Button class="w-full" onclick={() => (createRepoDialogOpen = true)}>
-						<Icon icon="lucide:plus" class="mr-2 size-4" />
-						New Repository
-					</Button>
+					<div class="space-y-1">
+						{#each $repositories as repo (repo.id)}
+							<div class="group relative">
+								<Button
+									variant={$currentRepository?.id === repo.id ? 'secondary' : 'ghost'}
+									class="w-full justify-start"
+									onclick={() => currentRepository.set(repo)}
+								>
+									<Icon icon="lucide:database" class="mr-2 size-4" />
+									<span class="flex-1 truncate text-left">{repo.name}</span>
+								</Button>
+								<div class="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100">
+									<RepoContextMenu {repo} />
+								</div>
+							</div>
+						{:else}
+							<p class="py-8 text-center text-sm text-muted-foreground">
+								No repositories yet
+							</p>
+						{/each}
+					</div>
 				</div>
-			</aside>
-		{/if}
+			</ScrollArea.Root>
+
+			<!-- Sidebar Footer -->
+			<div class="border-t p-4">
+				<Button class="w-full" onclick={() => (createRepoDialogOpen = true)}>
+					<Icon icon="lucide:plus" class="mr-2 size-4" />
+					New Repository
+				</Button>
+			</div>
+		</aside>
 
 		<!-- Main Content -->
 		<div class="flex flex-1 flex-col overflow-hidden">
 			<!-- Header -->
 			<header class="flex h-14 items-center gap-4 border-b px-4">
-				<Button
-					variant="ghost"
-					size="icon"
-					onclick={() => (sidebarOpen = !sidebarOpen)}
-				>
-					<Icon icon="lucide:menu" class="size-5" />
-				</Button>
 				{#if $currentRepository}
 					<div class="flex flex-1 items-center gap-2">
 						<Icon icon="lucide:database" class="size-4" />
