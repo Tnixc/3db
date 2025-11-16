@@ -9,20 +9,22 @@
 	import { createSvelteTable, FlexRender } from '$lib/components/ui/data-table/index.js';
 	import * as Table from '$lib/components/ui/table/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
-	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 	import Icon from '@iconify/svelte';
 	import { createRawSnippet } from 'svelte';
 	import { renderSnippet, renderComponent } from '$lib/components/ui/data-table/index.js';
+	import FileActionsMenu from '$lib/components/file-actions-menu.svelte';
 	import { currentRepository } from '$lib/stores/repositories';
 	import { authStore } from '$lib/stores/auth';
 	import { getContents, deleteFile, deleteFolder, createFile } from '$lib/services/github';
 
 	let {
 		currentPath = $bindable(''),
-		onNavigate
+		onNavigate,
+		onRefresh = $bindable()
 	}: {
 		currentPath?: string;
 		onNavigate?: (path: string) => void;
+		onRefresh?: () => Promise<void>;
 	} = $props();
 
 	let files = $state<FileContent[]>([]);
@@ -56,6 +58,11 @@
 			loading = false;
 		}
 	}
+
+	// Expose loadFiles via onRefresh binding
+	$effect(() => {
+		onRefresh = loadFiles;
+	});
 
 	// Load files when repository or path changes
 	$effect(() => {
@@ -248,70 +255,16 @@
 		},
 		{
 			id: 'actions',
+			header: '',
 			cell: ({ row }) => {
 				const file = row.original;
-				return renderComponent(
-					DropdownMenu.Root,
-					{},
-					{
-						default: () => [
-							renderComponent(
-								DropdownMenu.Trigger,
-								{},
-								{
-									child: ({ props }: any) =>
-										renderComponent(Button, {
-											...props,
-											variant: 'ghost',
-											size: 'icon',
-											class: 'size-8',
-											children: renderComponent(Icon, { icon: 'lucide:more-horizontal' })
-										})
-								}
-							),
-							renderComponent(
-								DropdownMenu.Content,
-								{ align: 'end' },
-								{
-									default: () => [
-										file.type === 'file'
-											? renderComponent(DropdownMenu.Item, {
-													onclick: () => copyLink(file),
-													children: 'Copy CDN Link'
-												})
-											: null,
-										file.type === 'file'
-											? renderComponent(DropdownMenu.Item, {
-													onclick: () => copyContents(file),
-													children: 'Copy Contents'
-												})
-											: null,
-										file.type === 'file'
-											? renderComponent(DropdownMenu.Item, {
-													onclick: () => window.open(file.download_url, '_blank'),
-													children: 'Download'
-												})
-											: null,
-										file.type === 'file' || file.type === 'dir'
-											? renderComponent(DropdownMenu.Separator, {})
-											: null,
-										file.type === 'file'
-											? renderComponent(DropdownMenu.Item, {
-													onclick: () => handleRename(file),
-													children: 'Rename'
-												})
-											: null,
-										renderComponent(DropdownMenu.Item, {
-											onclick: () => handleDelete(file),
-											class: 'text-destructive',
-											children: 'Delete'
-										})
-									].filter(Boolean)
-								}
-							)
-						]
-					}
-				);
+				return renderComponent(FileActionsMenu, {
+					file,
+					onCopyLink: copyLink,
+					onCopyContents: copyContents,
+					onRename: handleRename,
+					onDelete: handleDelete
+				});
 			}
 		}
 	];
