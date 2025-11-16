@@ -134,24 +134,17 @@
 		}
 	}
 
+	let hasInitialized = $state(false);
+
 	$effect(() => {
-		if ($auth.user) {
+		if ($auth.user && !hasInitialized) {
+			hasInitialized = true;
 			checkGithubAppInstallation();
-		} else {
-			isLoading = false;
-		}
-	});
-
-	$effect(() => {
-		theme.set($theme);
-		if ($auth.user) {
 			initGitHubConfig();
-		}
-	});
-
-	$effect(() => {
-		if (githubConfig) {
-			loadConnectedRepositories();
+		} else if (!$auth.user) {
+			hasInitialized = false;
+			isLoading = false;
+			githubConfig = null;
 		}
 	});
 

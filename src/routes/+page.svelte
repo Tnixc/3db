@@ -7,26 +7,21 @@
 
 	let githubConfig = $state<GitHubConfig | null>(null);
 	let isLoading = $state(true);
-
-	async function initGitHubConfig() {
-		if (!$auth.token || !$auth.user) return;
-
-		try {
-			githubConfig = {
-				token: $auth.token,
-				userEmail: $auth.user.email
-			};
-		} catch (error) {
-			console.error('Error initializing GitHub config:', error);
-		} finally {
-			isLoading = false;
-		}
-	}
+	let hasInitialized = $state(false);
 
 	$effect(() => {
-		if ($auth.user) {
-			initGitHubConfig();
-		} else {
+		if ($auth.user && !hasInitialized) {
+			hasInitialized = true;
+			if ($auth.token) {
+				githubConfig = {
+					token: $auth.token,
+					userEmail: $auth.user.email
+				};
+			}
+			isLoading = false;
+		} else if (!$auth.user) {
+			hasInitialized = false;
+			githubConfig = null;
 			isLoading = false;
 		}
 	});
