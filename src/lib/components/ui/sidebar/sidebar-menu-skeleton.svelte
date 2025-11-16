@@ -32,5 +32,7 @@
 		data-sidebar="menu-skeleton-text"
 		style="--skeleton-width: {width};"
 	/>
-	{@render children?.()}
+	{#if children}
+		{@render children()}
+	{/if}
 </div>

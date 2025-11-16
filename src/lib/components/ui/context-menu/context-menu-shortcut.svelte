@@ -16,5 +16,7 @@
 	class={cn('ml-auto text-xs tracking-widest text-muted-foreground', className)}
 	{...restProps}
 >
-	{@render children?.()}
+	{#if children}
+		{@render children()}
+	{/if}
 </span>

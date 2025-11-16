@@ -31,6 +31,8 @@
 	{@render child({ props: propObj })}
 {:else}
 	<button bind:this={ref} {...propObj}>
-		{@render children?.()}
+		{#if children}
+		{@render children()}
+	{/if}
 	</button>
 {/if}
