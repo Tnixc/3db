@@ -2,31 +2,21 @@
 	import { Button } from '$lib/components/ui/button';
 	import { Input } from '$lib/components/ui/input';
 	import Icon from '@iconify/svelte';
-	import { auth, fetchGitHubUser } from '$lib/stores/auth';
+	import { appState } from '$lib/stores/auth';
 
 	let token = $state('');
-	let isLoading = $state(false);
-	let error = $state<string | null>(null);
+
+	const state = $derived($appState);
+	const isLoading = $derived(state.status === 'logging_in');
+	const error = $derived(state.status === 'error' ? state.error : null);
 
 	async function handleLogin() {
 		if (!token.trim()) {
-			error = 'Please enter a token';
+			appState.setError('Please enter a token');
 			return;
 		}
 
-		isLoading = true;
-		error = null;
-
-		try {
-			// Verify token by fetching user info
-			const user = await fetchGitHubUser(token);
-			auth.init(token, user);
-		} catch (err) {
-			error = 'Invalid token or unable to fetch user information';
-			console.error('Login error:', err);
-		} finally {
-			isLoading = false;
-		}
+		await appState.login(token);
 	}
 </script>
 
