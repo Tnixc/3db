@@ -10,6 +10,18 @@ const createCommitter = (userEmail: string) => ({
 	email: userEmail
 });
 
+class GitHubError extends Error {
+	status: number;
+	statusText: string;
+
+	constructor(status: number, statusText: string) {
+		super(`GitHub API error: ${statusText}`);
+		this.status = status;
+		this.statusText = statusText;
+		this.name = 'GitHubError';
+	}
+}
+
 async function request(
 	config: GitHubConfig,
 	endpoint: string,
@@ -25,7 +37,7 @@ async function request(
 	});
 
 	if (!response.ok) {
-		throw new Error(`GitHub API error: ${response.statusText}`);
+		throw new GitHubError(response.status, response.statusText);
 	}
 
 	return response.json();

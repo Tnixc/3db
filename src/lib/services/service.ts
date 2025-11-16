@@ -2,7 +2,29 @@ import type { ServiceConfig } from '$lib/types';
 import { DEFAULT_SERVICE_CONFIG, SERVICE_REPO_PATH, SERVICE_CONFIG_FILE } from '$lib/types';
 import * as github from './github';
 
+let isInitializing = false;
+let initPromise: Promise<any> | null = null;
+
 export async function initializeServiceRepo(config: github.GitHubConfig) {
+	// If already initializing, return the existing promise to prevent race conditions
+	if (isInitializing && initPromise) {
+		console.log('Service repo initialization already in progress, reusing promise');
+		return initPromise;
+	}
+
+	isInitializing = true;
+	initPromise = _initializeServiceRepo(config);
+
+	try {
+		const result = await initPromise;
+		return result;
+	} finally {
+		isInitializing = false;
+		initPromise = null;
+	}
+}
+
+async function _initializeServiceRepo(config: github.GitHubConfig) {
 	// First, try to find existing service repo
 	const repos = await github.getRepositories(config);
 	let serviceRepo = repos.find((repo) => repo.name === SERVICE_REPO_PATH);
@@ -12,20 +34,29 @@ export async function initializeServiceRepo(config: github.GitHubConfig) {
 		serviceRepo = await github.createRepository(config, SERVICE_REPO_PATH);
 
 		// Create initial config file immediately after creating repo
-		await github.createFile(
-			config,
-			serviceRepo.owner.login,
-			serviceRepo.name,
-			SERVICE_CONFIG_FILE,
-			JSON.stringify(
-				{
-					...DEFAULT_SERVICE_CONFIG,
-					connectedRepos: [`${serviceRepo.owner.login}/${SERVICE_REPO_PATH}`]
-				},
-				null,
-				2
-			)
-		);
+		try {
+			await github.createFile(
+				config,
+				serviceRepo.owner.login,
+				serviceRepo.name,
+				SERVICE_CONFIG_FILE,
+				JSON.stringify(
+					{
+						...DEFAULT_SERVICE_CONFIG,
+						connectedRepos: [`${serviceRepo.owner.login}/${SERVICE_REPO_PATH}`]
+					},
+					null,
+					2
+				)
+			);
+		} catch (error: any) {
+			// If we get a 409 Conflict, it means the file was already created
+			// (probably by another concurrent request). This is fine, just continue.
+			if (error.status !== 409) {
+				throw error;
+			}
+			console.log('Config file already exists (409), continuing...');
+		}
 
 		return serviceRepo;
 	}
@@ -64,23 +95,31 @@ export async function initializeServiceRepo(config: github.GitHubConfig) {
 				);
 			}
 		}
-	} catch (error) {
-		if ((error as any).status === 404) {
+	} catch (error: any) {
+		if (error.status === 404) {
 			// Create new config file if it doesn't exist
-			await github.createFile(
-				config,
-				serviceRepo.owner.login,
-				serviceRepo.name,
-				SERVICE_CONFIG_FILE,
-				JSON.stringify(
-					{
-						...DEFAULT_SERVICE_CONFIG,
-						connectedRepos: [`${serviceRepo.owner.login}/${SERVICE_REPO_PATH}`]
-					},
-					null,
-					2
-				)
-			);
+			try {
+				await github.createFile(
+					config,
+					serviceRepo.owner.login,
+					serviceRepo.name,
+					SERVICE_CONFIG_FILE,
+					JSON.stringify(
+						{
+							...DEFAULT_SERVICE_CONFIG,
+							connectedRepos: [`${serviceRepo.owner.login}/${SERVICE_REPO_PATH}`]
+						},
+						null,
+						2
+					)
+				);
+			} catch (createError: any) {
+				// If we get a 409 Conflict, it means the file was created by another request
+				if (createError.status !== 409) {
+					throw createError;
+				}
+				console.log('Config file was created concurrently (409), continuing...');
+			}
 		} else {
 			throw error;
 		}
