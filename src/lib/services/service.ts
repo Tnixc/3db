@@ -71,7 +71,7 @@ async function _initializeServiceRepo(config: github.GitHubConfig) {
 		);
 
 		if (!Array.isArray(contents)) {
-			const fileContent = contents as { content: string };
+			const fileContent = contents as { content: string; sha: string };
 			const configContent = atob(fileContent.content);
 			const existingConfig = JSON.parse(configContent);
 

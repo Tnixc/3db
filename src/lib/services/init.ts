@@ -71,5 +71,5 @@ export function resetInitialization() {
 	isInitializing = false;
 	initializationPromise = null;
 	repositories.set([]);
-	serviceConfig.set({ connectedRepos: [] });
+	serviceConfig.set({ connectedRepos: [], version: 1 });
 }

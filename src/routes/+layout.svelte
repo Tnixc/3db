@@ -15,6 +15,7 @@
 	let { children } = $props<{ children: Snippet }>();
 
 	let createRepoDialogOpen = $state(false);
+	let sidebarOpen = $state(true);
 
 	// Initialize app when user logs in
 	onMount(() => {
@@ -37,6 +38,10 @@
 
 	function handleCreateRepo() {
 		createRepoDialogOpen = true;
+	}
+
+	function toggleSidebar() {
+		sidebarOpen = !sidebarOpen;
 	}
 </script>
 
@@ -69,8 +74,9 @@
 	</div>
 {:else if $authStore.status === 'ready'}
 	<div class="flex h-screen overflow-hidden">
-		<!-- Sidebar - Always visible -->
-		<aside class="flex w-64 flex-col border-r bg-background">
+		<!-- Sidebar - Toggleable -->
+		{#if sidebarOpen}
+		<aside class="flex w-64 flex-col border-r bg-background transition-all duration-300">
 			<!-- Sidebar Header -->
 			<div class="flex h-14 items-center justify-between border-b px-4">
 				<h2 class="text-lg font-semibold">3db</h2>
@@ -115,11 +121,15 @@
 				</Button>
 			</div>
 		</aside>
+		{/if}
 
 		<!-- Main Content -->
 		<div class="flex flex-1 flex-col overflow-hidden">
 			<!-- Header -->
 			<header class="flex h-14 items-center gap-4 border-b px-4">
+				<Button variant="ghost" size="icon" onclick={toggleSidebar} aria-label="Toggle sidebar">
+					<Icon icon={sidebarOpen ? 'lucide:panel-left-close' : 'lucide:panel-left-open'} class="size-5" />
+				</Button>
 				{#if $currentRepository}
 					<div class="flex flex-1 items-center gap-2">
 						<Icon icon="lucide:database" class="size-4" />

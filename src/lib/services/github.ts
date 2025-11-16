@@ -27,13 +27,18 @@ async function request(
 	endpoint: string,
 	options: RequestInit = {}
 ): Promise<any> {
-	const response = await fetch(`https://api.github.com${endpoint}`, {
+	// Add cache-busting parameter to prevent browser caching
+	const separator = endpoint.includes('?') ? '&' : '?';
+	const cacheBuster = `${separator}_=${Date.now()}`;
+
+	const response = await fetch(`https://api.github.com${endpoint}${cacheBuster}`, {
 		...options,
 		headers: {
 			Authorization: `Bearer ${config.token}`,
 			Accept: 'application/vnd.github.v3+json',
 			...options.headers
-		}
+		},
+		cache: 'no-store'
 	});
 
 	if (!response.ok) {
@@ -103,7 +108,7 @@ export async function getContents(
 	owner: string,
 	repo: string,
 	path = ''
-): Promise<FileContent[]> {
+): Promise<FileContent[] | FileContent> {
 	return request(config, `/repos/${owner}/${repo}/contents/${path}`);
 }
 

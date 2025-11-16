@@ -9,13 +9,14 @@
 	import { createSvelteTable, FlexRender } from '$lib/components/ui/data-table/index.js';
 	import * as Table from '$lib/components/ui/table/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
-	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 	import Icon from '@iconify/svelte';
 	import { createRawSnippet } from 'svelte';
 	import { renderSnippet, renderComponent } from '$lib/components/ui/data-table/index.js';
 	import { currentRepository } from '$lib/stores/repositories';
 	import { authStore } from '$lib/stores/auth';
-	import { getContents, deleteFile, deleteFolder } from '$lib/services/github';
+	import { getContents, deleteFile, deleteFolder, createFile } from '$lib/services/github';
+	import FileActionsMenu from './file-actions-menu.svelte';
+	import SortableHeader from './sortable-header.svelte';
 
 	let {
 		currentPath = $bindable(''),
@@ -47,7 +48,41 @@
 				$currentRepository.name,
 				currentPath
 			);
-			files = contents;
+
+			// Normalize to array (GitHub returns object for single file, array for directory)
+			const contentsArray = Array.isArray(contents) ? contents : [contents];
+
+			// Fetch last modified dates
+			const contentsWithDates = await Promise.all(
+				contentsArray.map(async (item) => {
+					try {
+						const response = await fetch(
+							`https://api.github.com/repos/${$currentRepository.owner.login}/${$currentRepository.name}/commits?path=${encodeURIComponent(item.path)}&page=1&per_page=1&_=${Date.now()}`,
+							{
+								headers: {
+									Authorization: `Bearer ${$authStore.token}`,
+									Accept: 'application/vnd.github.v3+json'
+								},
+								cache: 'no-store'
+							}
+						);
+						if (response.ok) {
+							const commits = await response.json();
+							if (commits && commits.length > 0) {
+								return {
+									...item,
+									last_modified: commits[0].commit.committer.date
+								};
+							}
+						}
+					} catch (err) {
+						console.warn(`Failed to fetch commit date for ${item.path}:`, err);
+					}
+					return item;
+				})
+			);
+
+			files = contentsWithDates;
 		} catch (err) {
 			console.error('Failed to load files:', err);
 			error = 'Failed to load files';
@@ -111,6 +146,66 @@
 		}
 	}
 
+	async function copyContents(file: FileContent) {
+		if (file.type === 'dir') return;
+
+		try {
+			const response = await fetch(file.download_url);
+			const content = await response.text();
+			await navigator.clipboard.writeText(content);
+		} catch (err) {
+			console.error('Failed to copy contents:', err);
+			alert('Failed to copy file contents');
+		}
+	}
+
+	async function handleRename(file: FileContent) {
+		const newName = prompt(`Rename ${file.type === 'dir' ? 'folder' : 'file'}:`, file.name);
+		if (!newName || newName === file.name) return;
+
+		if (!$currentRepository || $authStore.status !== 'ready') return;
+
+		try {
+			const config = { token: $authStore.token, userEmail: $authStore.user.email };
+			const pathParts = file.path.split('/');
+			pathParts[pathParts.length - 1] = newName;
+			const newPath = pathParts.join('/');
+
+			if (file.type === 'file') {
+				// For files: download content, create new file, delete old file
+				const response = await fetch(file.download_url);
+				const content = await response.text();
+
+				await createFile(
+					config,
+					$currentRepository.owner.login,
+					$currentRepository.name,
+					newPath,
+					content,
+					`Rename ${file.name} to ${newName}`
+				);
+
+				await deleteFile(
+					config,
+					$currentRepository.owner.login,
+					$currentRepository.name,
+					file.path,
+					file.sha,
+					`Rename ${file.name} to ${newName}`
+				);
+			} else {
+				// For folders: need to recursively move all contents
+				alert('Folder renaming is not yet supported. Please use GitHub web interface.');
+				return;
+			}
+
+			await loadFiles();
+		} catch (err) {
+			console.error('Failed to rename:', err);
+			alert('Failed to rename item');
+		}
+	}
+
 	function formatBytes(bytes: number): string {
 		if (bytes === 0) return '0 B';
 		const k = 1024;
@@ -119,10 +214,32 @@
 		return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
 	}
 
+	function formatDate(dateString?: string): string {
+		if (!dateString) return '-';
+		const date = new Date(dateString);
+		const now = new Date();
+		const diffMs = now.getTime() - date.getTime();
+		const diffMins = Math.floor(diffMs / 60000);
+		const diffHours = Math.floor(diffMs / 3600000);
+		const diffDays = Math.floor(diffMs / 86400000);
+
+		if (diffMins < 1) return 'Just now';
+		if (diffMins < 60) return `${diffMins}m ago`;
+		if (diffHours < 24) return `${diffHours}h ago`;
+		if (diffDays < 30) return `${diffDays}d ago`;
+
+		return date.toLocaleDateString();
+	}
+
 	const columns: ColumnDef<FileContent>[] = [
 		{
 			accessorKey: 'name',
-			header: 'Name',
+			header: ({ column }) => {
+				return renderComponent(SortableHeader, {
+					column,
+					children: 'Name'
+				});
+			},
 			cell: ({ row }) => {
 				const file = row.original;
 				const nameSnippet = createRawSnippet<[{ file: FileContent }]>((getFile) => {
@@ -150,8 +267,31 @@
 			}
 		},
 		{
+			accessorKey: 'type',
+			header: ({ column }) => {
+				return renderComponent(SortableHeader, {
+					column,
+					children: 'Type'
+				});
+			},
+			cell: ({ row }) => {
+				const typeSnippet = createRawSnippet<[{ type: string }]>((getType) => {
+					const { type } = getType();
+					return {
+						render: () => `<div class="text-muted-foreground capitalize">${type === 'dir' ? 'Folder' : 'File'}</div>`
+					};
+				});
+				return renderSnippet(typeSnippet, { type: row.original.type });
+			}
+		},
+		{
 			accessorKey: 'size',
-			header: 'Size',
+			header: ({ column }) => {
+				return renderComponent(SortableHeader, {
+					column,
+					children: 'Size'
+				});
+			},
 			cell: ({ row }) => {
 				const sizeSnippet = createRawSnippet<[{ size: string }]>((getSize) => {
 					const { size } = getSize();
@@ -162,62 +302,49 @@
 				return renderSnippet(sizeSnippet, {
 					size: row.original.type === 'dir' ? '-' : formatBytes(row.original.size)
 				});
+			},
+			sortingFn: (rowA, rowB) => {
+				const sizeA = rowA.original.type === 'dir' ? -1 : rowA.original.size;
+				const sizeB = rowB.original.type === 'dir' ? -1 : rowB.original.size;
+				return sizeA - sizeB;
+			}
+		},
+		{
+			accessorKey: 'last_modified',
+			header: ({ column }) => {
+				return renderComponent(SortableHeader, {
+					column,
+					children: 'Last Updated'
+				});
+			},
+			cell: ({ row }) => {
+				const dateSnippet = createRawSnippet<[{ date: string }]>((getDate) => {
+					const { date } = getDate();
+					return {
+						render: () => `<div class="text-muted-foreground">${date}</div>`
+					};
+				});
+				return renderSnippet(dateSnippet, {
+					date: formatDate(row.original.last_modified)
+				});
+			},
+			sortingFn: (rowA, rowB) => {
+				const dateA = rowA.original.last_modified ? new Date(rowA.original.last_modified).getTime() : 0;
+				const dateB = rowB.original.last_modified ? new Date(rowB.original.last_modified).getTime() : 0;
+				return dateA - dateB;
 			}
 		},
 		{
 			id: 'actions',
 			cell: ({ row }) => {
 				const file = row.original;
-				return renderComponent(
-					DropdownMenu.Root,
-					{},
-					{
-						default: () => [
-							renderComponent(
-								DropdownMenu.Trigger,
-								{},
-								{
-									child: ({ props }: any) =>
-										renderComponent(Button, {
-											...props,
-											variant: 'ghost',
-											size: 'icon',
-											class: 'size-8',
-											children: renderComponent(Icon, { icon: 'lucide:more-horizontal' })
-										})
-								}
-							),
-							renderComponent(
-								DropdownMenu.Content,
-								{ align: 'end' },
-								{
-									default: () => [
-										file.type === 'file'
-											? renderComponent(DropdownMenu.Item, {
-													onclick: () => copyLink(file),
-													children: 'Copy CDN Link'
-												})
-											: null,
-										file.type === 'file'
-											? renderComponent(DropdownMenu.Item, {
-													onclick: () => window.open(file.download_url, '_blank'),
-													children: 'Download'
-												})
-											: null,
-										file.type === 'file' || file.type === 'dir'
-											? renderComponent(DropdownMenu.Separator, {})
-											: null,
-										renderComponent(DropdownMenu.Item, {
-											onclick: () => handleDelete(file),
-											class: 'text-destructive',
-											children: 'Delete'
-										})
-									].filter(Boolean)
-								}
-							)
-						]
-					}
-				);
+				return renderComponent(FileActionsMenu, {
+					file,
+					onCopyLink: copyLink,
+					onCopyContents: copyContents,
+					onRename: handleRename,
+					onDelete: handleDelete
+				});
 			}
 		}
 	];
@@ -247,15 +374,21 @@
 </script>
 
 <div class="flex h-full flex-col">
-	{#if currentPath}
-		<div class="mb-2 flex items-center gap-2">
-			<Button variant="ghost" size="sm" onclick={goUp}>
-				<Icon icon="lucide:arrow-left" class="mr-2 size-4" />
-				Back
-			</Button>
-			<span class="text-sm text-muted-foreground">/{currentPath}</span>
+	<div class="mb-2 flex items-center justify-between gap-2">
+		<div class="flex items-center gap-2">
+			{#if currentPath}
+				<Button variant="ghost" size="sm" onclick={goUp}>
+					<Icon icon="lucide:arrow-left" class="mr-2 size-4" />
+					Back
+				</Button>
+				<span class="text-sm text-muted-foreground">/{currentPath}</span>
+			{/if}
 		</div>
-	{/if}
+		<Button variant="ghost" size="sm" onclick={loadFiles} disabled={loading}>
+			<Icon icon="lucide:refresh-cw" class={`mr-2 size-4 ${loading ? 'animate-spin' : ''}`} />
+			Refresh
+		</Button>
+	</div>
 
 	{#if loading}
 		<div class="flex h-64 items-center justify-center">
