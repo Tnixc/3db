@@ -16,5 +16,5 @@
 	class={cn("text-muted-foreground ml-auto text-xs tracking-widest", className)}
 	{...restProps}
 >
-	{@render children?.()}
+	{#if children}{@render children()}{/if}
 </span>

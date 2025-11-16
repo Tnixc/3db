@@ -17,5 +17,5 @@
 	class={cn("w-full text-sm", className)}
 	{...restProps}
 >
-	{@render children?.()}
+	{#if children}{@render children()}{/if}
 </div>

@@ -16,5 +16,5 @@
 	class={cn("ml-auto text-xs tracking-widest opacity-60", className)}
 	{...restProps}
 >
-	{@render children?.()}
+	{#if children}{@render children()}{/if}
 </span>

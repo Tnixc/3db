@@ -60,7 +60,7 @@
 		{href}
 		{...restProps}
 	>
-		{@render children?.()}
+		{#if children}{@render children()}{/if}
 	</a>
 {:else}
 	<button
@@ -69,6 +69,6 @@
 		{type}
 		{...restProps}
 	>
-		{@render children?.()}
+		{#if children}{@render children()}{/if}
 	</button>
 {/if}

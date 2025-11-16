@@ -10,5 +10,5 @@
 </script>
 
 <li bind:this={ref} data-sidebar="menu-sub-item" {...restProps}>
-	{@render children?.()}
+	{#if children}{@render children()}{/if}
 </li>

@@ -16,5 +16,5 @@
 	class={cn("bg-card text-card-foreground rounded-lg border shadow-sm", className)}
 	{...restProps}
 >
-	{@render children?.()}
+	{#if children}{@render children()}{/if}
 </div>

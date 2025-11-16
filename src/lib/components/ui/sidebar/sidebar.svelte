@@ -32,7 +32,7 @@
 		bind:this={ref}
 		{...restProps}
 	>
-		{@render children?.()}
+		{#if children}{@render children()}{/if}
 	</div>
 {:else if sidebar.isMobile}
 	<Sheet.Root
@@ -47,7 +47,7 @@
 			{side}
 		>
 			<div class="flex h-full w-full flex-col">
-				{@render children?.()}
+				{#if children}{@render children()}{/if}
 			</div>
 		</Sheet.Content>
 	</Sheet.Root>
@@ -89,7 +89,7 @@
 				data-sidebar="sidebar"
 				class="bg-sidebar group-data-[variant=floating]:border-sidebar-border flex h-full w-full flex-col group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:shadow"
 			>
-				{@render children?.()}
+				{#if children}{@render children()}{/if}
 			</div>
 		</div>
 	</div>

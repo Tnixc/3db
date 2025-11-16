@@ -17,5 +17,5 @@
 	class={cn("flex flex-col gap-2 p-2", className)}
 	{...restProps}
 >
-	{@render children?.()}
+	{#if children}{@render children()}{/if}
 </div>

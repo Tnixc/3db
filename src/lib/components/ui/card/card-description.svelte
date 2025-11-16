@@ -12,5 +12,5 @@
 </script>
 
 <p bind:this={ref} class={cn("text-muted-foreground text-sm", className)} {...restProps}>
-	{@render children?.()}
+	{#if children}{@render children()}{/if}
 </p>

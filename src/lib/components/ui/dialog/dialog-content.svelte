@@ -27,7 +27,7 @@
 		)}
 		{...restProps}
 	>
-		{@render children?.()}
+		{#if children}{@render children()}{/if}
 		<DialogPrimitive.Close
 			class="ring-offset-background focus:ring-ring absolute right-4 top-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:pointer-events-none"
 		>
