@@ -11,7 +11,6 @@
 	import * as ScrollArea from '$lib/components/ui/scroll-area';
 	import Icon from '@iconify/svelte';
 	import type { Snippet } from 'svelte';
-	import { Toaster } from 'svelte-sonner';
 
 	let { children } = $props<{ children: Snippet }>();
 
@@ -155,5 +154,4 @@
 
 	<!-- Dialogs -->
 	<CreateRepoDialog bind:open={createRepoDialogOpen} />
-	<Toaster richColors position="top-right" />
 {/if}

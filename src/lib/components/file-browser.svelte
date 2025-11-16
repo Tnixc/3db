@@ -22,7 +22,6 @@
 	import { currentRepository } from '$lib/stores/repositories';
 	import { authStore } from '$lib/stores/auth';
 	import { getContents, deleteFile, deleteFolder, createFile } from '$lib/services/github';
-	import { toast } from 'svelte-sonner';
 
 	let {
 		currentPath = $bindable(''),
@@ -56,7 +55,9 @@
 				$currentRepository.name,
 				currentPath
 			);
-			files = contents;
+			// Force reactivity by creating a new array
+			files = [...contents];
+			console.log('[FileBrowser] Loaded', files.length, 'files');
 		} catch (err) {
 			console.error('Failed to load files:', err);
 			error = 'Failed to load files';
@@ -66,10 +67,8 @@
 		}
 	}
 
-	// Expose loadFiles via onRefresh binding
-	$effect(() => {
-		onRefresh = loadFiles;
-	});
+	// Expose loadFiles via onRefresh binding - run immediately
+	onRefresh = loadFiles;
 
 	// Load files when repository or path changes
 	$effect(() => {
@@ -113,17 +112,15 @@
 				);
 			}
 			await loadFiles();
-			toast.success(`Deleted ${file.name}`);
 		} catch (err) {
 			console.error('Failed to delete:', err);
-			toast.error('Failed to delete file/folder');
+			alert('Failed to delete file/folder');
 		}
 	}
 
 	function copyLink(file: FileContent) {
 		if (file.download_url) {
 			navigator.clipboard.writeText(file.download_url);
-			toast.success('CDN link copied to clipboard');
 		}
 	}
 
@@ -145,10 +142,9 @@
 			// Decode base64 content
 			const content = fileData.content ? atob(fileData.content) : '';
 			await navigator.clipboard.writeText(content);
-			toast.success('File contents copied to clipboard');
 		} catch (err) {
 			console.error('Failed to copy contents:', err);
-			toast.error('Failed to copy file contents');
+			alert('Failed to copy file contents');
 		}
 	}
 
@@ -201,13 +197,12 @@
 				);
 
 				await loadFiles();
-				toast.success(`Renamed ${file.name} to ${newName}`);
 			} else {
-				toast.error('Renaming folders is not supported yet');
+				alert('Renaming folders is not supported yet');
 			}
 		} catch (err) {
 			console.error('Failed to rename:', err);
-			toast.error('Failed to rename file');
+			alert('Failed to rename file');
 		}
 	}
 
@@ -222,7 +217,26 @@
 	const columns: ColumnDef<FileContent>[] = [
 		{
 			accessorKey: 'name',
-			header: 'Name',
+			header: ({ column }) => {
+				const isSorted = column.getIsSorted();
+				const sortIcon = isSorted === 'asc' ? 'lucide:arrow-up' : isSorted === 'desc' ? 'lucide:arrow-down' : 'lucide:arrow-up-down';
+				const headerSnippet = createRawSnippet(() => {
+					return {
+						render: () => `
+							<div class="flex items-center gap-2 cursor-pointer select-none">
+								<span>Name</span>
+								<iconify-icon icon="${sortIcon}" class="size-4 ${!isSorted ? 'opacity-50' : ''}"></iconify-icon>
+							</div>
+						`
+					};
+				});
+				return renderComponent(Button, {
+					variant: 'ghost',
+					class: 'h-auto p-0 -ml-4 hover:bg-transparent',
+					onclick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+					children: renderSnippet(headerSnippet, {})
+				});
+			},
 			cell: ({ row }) => {
 				const file = row.original;
 				const nameSnippet = createRawSnippet<[{ file: FileContent }]>((getFile) => {
@@ -251,7 +265,26 @@
 		},
 		{
 			accessorKey: 'size',
-			header: 'Size',
+			header: ({ column }) => {
+				const isSorted = column.getIsSorted();
+				const sortIcon = isSorted === 'asc' ? 'lucide:arrow-up' : isSorted === 'desc' ? 'lucide:arrow-down' : 'lucide:arrow-up-down';
+				const headerSnippet = createRawSnippet(() => {
+					return {
+						render: () => `
+							<div class="flex items-center gap-2 cursor-pointer select-none">
+								<span>Size</span>
+								<iconify-icon icon="${sortIcon}" class="size-4 ${!isSorted ? 'opacity-50' : ''}"></iconify-icon>
+							</div>
+						`
+					};
+				});
+				return renderComponent(Button, {
+					variant: 'ghost',
+					class: 'h-auto p-0 -ml-4 hover:bg-transparent',
+					onclick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+					children: renderSnippet(headerSnippet, {})
+				});
+			},
 			cell: ({ row }) => {
 				const sizeSnippet = createRawSnippet<[{ size: string }]>((getSize) => {
 					const { size } = getSize();
