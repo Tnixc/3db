@@ -21,10 +21,12 @@
 
 	let {
 		currentPath = $bindable(''),
-		onNavigate
+		onNavigate,
+		onUpload
 	}: {
 		currentPath?: string;
 		onNavigate?: (path: string) => void;
+		onUpload?: () => void;
 	} = $props();
 
 	let files = $state<FileContent[]>([]);
@@ -368,10 +370,18 @@
 				<span class="text-sm text-muted-foreground">/{currentPath}</span>
 			{/if}
 		</div>
-		<Button variant="ghost" size="sm" onclick={loadFiles} disabled={loading}>
-			<Icon icon="lucide:refresh-cw" class="mr-2 size-4 shrink-0 {loading ? 'animate-spin' : ''}" />
-			Refresh
-		</Button>
+		<div class="flex items-center gap-2">
+			<Button variant="ghost" size="sm" onclick={loadFiles} disabled={loading}>
+				<Icon icon="lucide:refresh-cw" class="mr-2 size-4 shrink-0 {loading ? 'animate-spin' : ''}" />
+				Refresh
+			</Button>
+			{#if onUpload}
+				<Button size="sm" onclick={onUpload}>
+					<Icon icon="lucide:upload" class="mr-2 size-4 shrink-0" />
+					Upload Files
+				</Button>
+			{/if}
+		</div>
 	</div>
 
 	{#if loading}
@@ -387,7 +397,7 @@
 			<Table.Root>
 				<Table.Header>
 					{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
-						<Table.Row>
+						<Table.Row class="p-4">
 							{#each headerGroup.headers as header (header.id)}
 								<Table.Head colspan={header.colSpan}>
 									{#if !header.isPlaceholder}
