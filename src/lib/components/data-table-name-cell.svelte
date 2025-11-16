@@ -15,13 +15,13 @@
 		onclick={() => onNavigate(file.path)}
 	>
 		<div class="flex items-center gap-2">
-			<Icon {icon} class="size-4" />
+			<Icon {icon} class="size-4 shrink-0" />
 			<span>{file.name}</span>
 		</div>
 	</Button>
 {:else}
 	<div class="flex items-center gap-2">
-		<Icon {icon} class="size-4" />
+		<Icon {icon} class="size-4 shrink-0" />
 		<span>{file.name}</span>
 	</div>
 {/if}

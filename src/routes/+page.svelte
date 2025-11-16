@@ -35,7 +35,7 @@
 			</p>
 		</div>
 		<Button onclick={() => (uploadDialogOpen = true)}>
-			<Icon icon="lucide:upload" class="mr-2 size-4" />
+			<Icon icon="lucide:upload" class="mr-2 size-4 shrink-0" />
 			Upload Files
 		</Button>
 	</div>

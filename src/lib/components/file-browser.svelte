@@ -362,14 +362,14 @@
 		<div class="flex items-center gap-2">
 			{#if currentPath}
 				<Button variant="ghost" size="sm" onclick={goUp}>
-					<Icon icon="lucide:arrow-left" class="mr-2 size-4" />
+					<Icon icon="lucide:arrow-left" class="mr-2 size-4 shrink-0" />
 					Back
 				</Button>
 				<span class="text-sm text-muted-foreground">/{currentPath}</span>
 			{/if}
 		</div>
 		<Button variant="ghost" size="sm" onclick={loadFiles} disabled={loading}>
-			<Icon icon="lucide:refresh-cw" class={`mr-2 size-4 ${loading ? 'animate-spin' : ''}`} />
+			<Icon icon="lucide:refresh-cw" class="mr-2 size-4 shrink-0 {loading ? 'animate-spin' : ''}" />
 			Refresh
 		</Button>
 	</div>
