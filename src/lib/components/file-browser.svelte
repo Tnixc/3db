@@ -248,8 +248,7 @@
 					file: row.original,
 					onNavigate: navigateTo
 				});
-			},
-			size: 9999
+			}
 		},
 		{
 			accessorKey: 'type',
@@ -404,7 +403,11 @@
 					{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
 						<Table.Row class="p-4">
 							{#each headerGroup.headers as header (header.id)}
-								<Table.Head colspan={header.colSpan} class="translate-x-4">
+								<Table.Head
+									colspan={header.colSpan}
+									class="translate-x-4"
+									style={header.column.columnDef.size ? `width: ${header.column.columnDef.size}px` : 'width: 100%'}
+								>
 									{#if !header.isPlaceholder}
 										<FlexRender
 											content={header.column.columnDef.header}
@@ -420,7 +423,7 @@
 					{#each table.getRowModel().rows as row (row.id)}
 						<Table.Row data-state={row.getIsSelected() && 'selected'}>
 							{#each row.getVisibleCells() as cell (cell.id)}
-								<Table.Cell>
+								<Table.Cell style={cell.column.columnDef.size ? `width: ${cell.column.columnDef.size}px` : 'width: 100%'}>
 									<FlexRender
 										content={cell.column.columnDef.cell}
 										context={cell.getContext()}
