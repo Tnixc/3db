@@ -405,7 +405,7 @@
 							{#each headerGroup.headers as header (header.id)}
 								<Table.Head
 									colspan={header.colSpan}
-									class="translate-x-4"
+									class={header.column.id === 'actions' ? 'translate-x-4 pr-2' : 'translate-x-4'}
 									style={header.column.columnDef.size ? `width: ${header.column.columnDef.size}px` : 'width: 100%'}
 								>
 									{#if !header.isPlaceholder}
@@ -423,7 +423,10 @@
 					{#each table.getRowModel().rows as row (row.id)}
 						<Table.Row data-state={row.getIsSelected() && 'selected'}>
 							{#each row.getVisibleCells() as cell (cell.id)}
-								<Table.Cell style={cell.column.columnDef.size ? `width: ${cell.column.columnDef.size}px` : 'width: 100%'}>
+								<Table.Cell
+									style={cell.column.columnDef.size ? `width: ${cell.column.columnDef.size}px` : 'width: 100%'}
+									class={cell.column.id === 'actions' ? 'pr-2' : ''}
+								>
 									<FlexRender
 										content={cell.column.columnDef.cell}
 										context={cell.getContext()}
