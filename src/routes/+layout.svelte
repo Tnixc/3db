@@ -7,8 +7,8 @@
 	import RepoContextMenu from '$lib/components/repo-context-menu.svelte';
 	import UserMenu from '$lib/components/user-menu.svelte';
 	import CreateRepoDialog from '$lib/components/create-repo-dialog.svelte';
-	import * as Sidebar from '$lib/components/ui/sidebar';
 	import { Button } from '$lib/components/ui/button';
+	import * as ScrollArea from '$lib/components/ui/scroll-area';
 	import Icon from '@iconify/svelte';
 	import type { Snippet } from 'svelte';
 
@@ -65,79 +65,87 @@
 		</div>
 	</div>
 {:else if $authStore.status === 'ready'}
-	<Sidebar.Provider bind:open={sidebarOpen}>
-		<div class="flex h-screen w-full">
-			<!-- Sidebar -->
-			<Sidebar.Sidebar>
-				<Sidebar.Header>
-					<div class="flex items-center justify-between px-2">
-						<h2 class="text-lg font-semibold">3db</h2>
-						<UserMenu onSignOut={handleSignOut} />
+	<div class="flex h-screen overflow-hidden">
+		<!-- Sidebar -->
+		{#if sidebarOpen}
+			<aside class="flex w-64 flex-col border-r bg-background">
+				<!-- Sidebar Header -->
+				<div class="flex h-14 items-center justify-between border-b px-4">
+					<h2 class="text-lg font-semibold">3db</h2>
+					<UserMenu onSignOut={handleSignOut} />
+				</div>
+
+				<!-- Repositories List -->
+				<ScrollArea.Root class="flex-1">
+					<div class="p-4">
+						<div class="mb-2 flex items-center justify-between">
+							<h3 class="text-sm font-medium text-muted-foreground">Repositories</h3>
+						</div>
+						<div class="space-y-1">
+							{#each $repositories as repo (repo.id)}
+								<div class="group relative">
+									<Button
+										variant={$currentRepository?.id === repo.id ? 'secondary' : 'ghost'}
+										class="w-full justify-start"
+										onclick={() => currentRepository.set(repo)}
+									>
+										<Icon icon="lucide:database" class="mr-2 size-4" />
+										<span class="flex-1 truncate text-left">{repo.name}</span>
+									</Button>
+									<div class="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100">
+										<RepoContextMenu {repo} />
+									</div>
+								</div>
+							{:else}
+								<p class="py-8 text-center text-sm text-muted-foreground">
+									No repositories yet
+								</p>
+							{/each}
+						</div>
 					</div>
-				</Sidebar.Header>
-				<Sidebar.Content>
-					<Sidebar.Group>
-						<Sidebar.GroupLabel>Repositories</Sidebar.GroupLabel>
-						<Sidebar.GroupContent>
-							<Sidebar.Menu>
-								{#each $repositories as repo (repo.id)}
-									<Sidebar.MenuItem>
-										<Sidebar.MenuButton
-											onclick={() => currentRepository.set(repo)}
-											isActive={$currentRepository?.id === repo.id}
-										>
-											<Icon icon="lucide:database" class="mr-2 size-4" />
-											<span class="flex-1 truncate">{repo.name}</span>
-										</Sidebar.MenuButton>
-										<Sidebar.MenuAction>
-											<RepoContextMenu {repo} />
-										</Sidebar.MenuAction>
-									</Sidebar.MenuItem>
-								{:else}
-									<p class="px-2 py-4 text-center text-sm text-muted-foreground">
-										No repositories yet
-									</p>
-								{/each}
-							</Sidebar.Menu>
-						</Sidebar.GroupContent>
-					</Sidebar.Group>
-				</Sidebar.Content>
-				<Sidebar.Footer class="p-2">
+				</ScrollArea.Root>
+
+				<!-- Sidebar Footer -->
+				<div class="border-t p-4">
 					<Button class="w-full" onclick={() => (createRepoDialogOpen = true)}>
 						<Icon icon="lucide:plus" class="mr-2 size-4" />
 						New Repository
 					</Button>
-				</Sidebar.Footer>
-			</Sidebar.Sidebar>
+				</div>
+			</aside>
+		{/if}
 
-			<!-- Main Content -->
-			<div class="flex flex-1 flex-col overflow-hidden">
-				<!-- Header -->
-				<header class="border-b">
-					<div class="flex h-14 items-center gap-4 px-4">
-						<Sidebar.Trigger />
-						{#if $currentRepository}
-							<div class="flex flex-1 items-center gap-2">
-								<Icon icon="lucide:database" class="size-4" />
-								<span class="font-medium">{$currentRepository.name}</span>
-								<span class="text-sm text-muted-foreground">
-									by {$currentRepository.owner.login}
-								</span>
-							</div>
-						{:else}
-							<span class="text-muted-foreground">Select a repository to get started</span>
-						{/if}
+		<!-- Main Content -->
+		<div class="flex flex-1 flex-col overflow-hidden">
+			<!-- Header -->
+			<header class="flex h-14 items-center gap-4 border-b px-4">
+				<Button
+					variant="ghost"
+					size="icon"
+					onclick={() => (sidebarOpen = !sidebarOpen)}
+				>
+					<Icon icon="lucide:menu" class="size-5" />
+				</Button>
+				{#if $currentRepository}
+					<div class="flex flex-1 items-center gap-2">
+						<Icon icon="lucide:database" class="size-4" />
+						<span class="font-medium">{$currentRepository.name}</span>
+						<span class="text-sm text-muted-foreground">
+							by {$currentRepository.owner.login}
+						</span>
 					</div>
-				</header>
+				{:else}
+					<span class="text-muted-foreground">Select a repository to get started</span>
+				{/if}
+			</header>
 
-				<!-- Page Content -->
-				<main class="flex-1 overflow-auto p-4">
-					{@render children()}
-				</main>
-			</div>
+			<!-- Page Content -->
+			<main class="flex-1 overflow-auto p-6">
+				{@render children()}
+			</main>
 		</div>
+	</div>
 
-		<!-- Dialogs -->
-		<CreateRepoDialog bind:open={createRepoDialogOpen} />
-	</Sidebar.Provider>
+	<!-- Dialogs -->
+	<CreateRepoDialog bind:open={createRepoDialogOpen} />
 {/if}

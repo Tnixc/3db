@@ -22,37 +22,35 @@
 	}
 </script>
 
-<div class="flex h-full flex-col">
-	{#if $currentRepository}
-		<div class="mb-4 flex items-center justify-between">
-			<div>
-				<h1 class="text-2xl font-bold">File Browser</h1>
-				<p class="text-sm text-muted-foreground">
-					Browse and manage files in {$currentRepository.name}
-				</p>
-			</div>
-			<Button onclick={() => (uploadDialogOpen = true)}>
-				<Icon icon="lucide:upload" class="mr-2 size-4" />
-				Upload Files
-			</Button>
+{#if $currentRepository}
+	<div class="mb-4 flex items-center justify-between">
+		<div>
+			<h1 class="text-2xl font-bold">File Browser</h1>
+			<p class="text-sm text-muted-foreground">
+				Browse and manage files in {$currentRepository.name}
+			</p>
 		</div>
+		<Button onclick={() => (uploadDialogOpen = true)}>
+			<Icon icon="lucide:upload" class="mr-2 size-4" />
+			Upload Files
+		</Button>
+	</div>
 
-		<FileBrowser bind:currentPath onNavigate={handleNavigate} />
+	<FileBrowser bind:currentPath onNavigate={handleNavigate} />
 
-		<FileUploadDialog
-			bind:open={uploadDialogOpen}
-			{currentPath}
-			onUploadComplete={handleUploadComplete}
-		/>
-	{:else}
-		<div class="flex h-full items-center justify-center">
-			<div class="text-center">
-				<Icon icon="lucide:database" class="mx-auto mb-4 size-12 text-muted-foreground" />
-				<h2 class="mb-2 text-xl font-semibold">No Repository Selected</h2>
-				<p class="text-muted-foreground">
-					Select a repository from the sidebar or create a new one to get started
-				</p>
-			</div>
+	<FileUploadDialog
+		bind:open={uploadDialogOpen}
+		{currentPath}
+		onUploadComplete={handleUploadComplete}
+	/>
+{:else}
+	<div class="flex min-h-[calc(100vh-8rem)] items-center justify-center">
+		<div class="text-center">
+			<Icon icon="lucide:database" class="mx-auto mb-4 size-16 text-muted-foreground" />
+			<h2 class="mb-2 text-2xl font-semibold">No Repository Selected</h2>
+			<p class="text-muted-foreground">
+				Select a repository from the sidebar or create a new one to get started
+			</p>
 		</div>
-	{/if}
-</div>
+	</div>
+{/if}
