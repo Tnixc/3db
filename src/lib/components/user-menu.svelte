@@ -2,17 +2,16 @@
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { Button } from '$lib/components/ui/button';
 	import { theme } from '$lib/stores/theme';
+	import type { GitHubUser } from '$lib/stores/auth';
 	import Icon from '@iconify/svelte';
+
 	let { user, onSignOut } = $props<{
-		user: App.PageData['user'];
+		user: GitHubUser;
 		onSignOut: () => void;
 	}>();
 
 	function openGitHubRepo() {
-		window.open(
-			`https://github.com/${user?.user_metadata.user_name}?tab=repositories&type=source`,
-			'_blank'
-		);
+		window.open(`https://github.com/${user.login}?tab=repositories&type=source`, '_blank');
 	}
 
 	function openSourceRepo() {
@@ -24,14 +23,10 @@
 	<DropdownMenu.Trigger>
 		<Button size="lg" variant="ghost" class="relative h-12 w-full py-2 pl-2 pr-2 text-start">
 			<div class="flex flex-col">
-				<p class="text-sm font-medium">{user?.user_metadata.name}</p>
-				<p class="text-xs text-muted-foreground">{user?.email}</p>
+				<p class="text-sm font-medium">{user.name}</p>
+				<p class="text-xs text-muted-foreground">{user.email}</p>
 			</div>
-			<img
-				src={user?.user_metadata.avatar_url}
-				alt="Profile"
-				class="ml-auto mr-0 h-8 w-8 rounded-full"
-			/>
+			<img src={user.avatar_url} alt="Profile" class="ml-auto mr-0 h-8 w-8 rounded-full" />
 		</Button>
 	</DropdownMenu.Trigger>
 	<DropdownMenu.Content class="w-60" align="end">

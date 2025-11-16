@@ -1,6 +1,7 @@
 <script lang="ts">
 	import '../app.css';
 	import { theme } from '$lib/stores/theme';
+	import { auth } from '$lib/stores/auth';
 	import { PUBLIC_GITHUB_APP_NAME } from '$env/static/public';
 	import RepoContextMenu from '$lib/components/repo-context-menu.svelte';
 	import * as Sidebar from '$lib/components/ui/sidebar';
@@ -17,8 +18,7 @@
 	import { serviceConfig } from '$lib/stores/service-config';
 	import { needsReload } from '$lib/stores/reload';
 
-	let { data, children } = $props<{
-		data: App.PageData;
+	let { children } = $props<{
 		children: Snippet;
 	}>();
 
@@ -90,18 +90,12 @@
 	}
 
 	async function initGitHubConfig() {
-		if (!data.supabase || !data.user) return;
+		if (!$auth.token || !$auth.user) return;
 
 		try {
-			// Get the current session which includes provider tokens
-			const {
-				data: { session }
-			} = await data.supabase.auth.getSession();
-			if (!session?.provider_token) return;
-
 			githubConfig = {
-				token: session.provider_token,
-				userEmail: data.user.email ?? 'unknown'
+				token: $auth.token,
+				userEmail: $auth.user.email
 			};
 
 			// Load repositories immediately after setting up GitHub config
@@ -110,7 +104,7 @@
 			} catch (error) {
 				console.error('Error loading connected repositories:', error);
 				console.log('Attempting to create service repo...');
-				if (await github.checkRepo(githubConfig, data.username, '3db-service')) {
+				if (await github.checkRepo(githubConfig, $auth.user.login, '3db-service')) {
 					await service.initializeServiceRepo(githubConfig);
 				}
 			}
@@ -120,12 +114,13 @@
 	}
 
 	async function checkGithubAppInstallation() {
-		if (!data.user) return;
+		if (!$auth.user || !$auth.token) return;
 
 		try {
 			const response = await fetch('/api/github/check-installation', {
 				headers: {
-					'Content-Type': 'application/json'
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${$auth.token}`
 				}
 			});
 
@@ -140,7 +135,7 @@
 	}
 
 	$effect(() => {
-		if (data.user) {
+		if ($auth.user) {
 			checkGithubAppInstallation();
 		} else {
 			isLoading = false;
@@ -149,7 +144,7 @@
 
 	$effect(() => {
 		theme.set($theme);
-		if (data.user) {
+		if ($auth.user) {
 			initGitHubConfig();
 		}
 	});
@@ -159,14 +154,14 @@
 			loadConnectedRepositories();
 		}
 	});
-	async function signOut() {
-		await data.supabase.auth.signOut();
-		window.location.reload();
+
+	function signOut() {
+		auth.logout();
 	}
 </script>
 
 {#if !isLoading}
-	{#if data.user}
+	{#if $auth.user}
 		{#if !hasGithubApp}
 			<GithubAppPrompt
 				installationUrl={`https://github.com/apps/${PUBLIC_GITHUB_APP_NAME}/installations/new`}
@@ -175,7 +170,7 @@
 			<Sidebar.Provider bind:open={sidebarOpen}>
 				<Sidebar.Root>
 					<Sidebar.Header>
-						<UserMenu user={data.user} onSignOut={signOut} />
+						<UserMenu user={$auth.user} onSignOut={signOut} />
 					</Sidebar.Header>
 
 					<Sidebar.Content>
