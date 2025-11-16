@@ -267,7 +267,7 @@
 				});
 				return renderSnippet(typeSnippet, { type: row.original.type });
 			},
-			size: 100
+			size: 120
 		},
 		{
 			accessorKey: 'size',
@@ -293,7 +293,7 @@
 				const sizeB = rowB.original.type === 'dir' ? -1 : rowB.original.size;
 				return sizeA - sizeB;
 			},
-			size: 100
+			size: 120
 		},
 		{
 			accessorKey: 'last_modified',
@@ -319,7 +319,7 @@
 				const dateB = rowB.original.last_modified ? new Date(rowB.original.last_modified).getTime() : 0;
 				return dateA - dateB;
 			},
-			size: 150
+			size: 180
 		},
 		{
 			id: 'actions',
@@ -335,7 +335,7 @@
 					onDelete: handleDelete
 				});
 			},
-			size: 40
+			size: 48
 		}
 	];
 
@@ -398,15 +398,15 @@
 		</div>
 	{:else}
 		<div class="rounded-md border">
-			<Table.Root>
+			<Table.Root class="table-fixed w-full">
 				<Table.Header>
 					{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
-						<Table.Row class="p-4">
+						<Table.Row>
 							{#each headerGroup.headers as header (header.id)}
 								<Table.Head
 									colspan={header.colSpan}
-									class={header.column.id === 'actions' ? 'translate-x-4 pl-4 pt-3 pb-3 pr-0' : 'translate-x-4'}
-									style={header.column.columnDef.size ? `width: ${header.column.columnDef.size}px` : 'width: 100%'}
+									class={header.column.id === 'actions' ? 'w-12 text-right pr-2' : ''}
+									style={header.column.columnDef.size && header.column.id !== 'actions' ? `width: ${header.column.columnDef.size}px` : ''}
 								>
 									{#if !header.isPlaceholder}
 										<FlexRender
@@ -424,8 +424,8 @@
 						<Table.Row data-state={row.getIsSelected() && 'selected'}>
 							{#each row.getVisibleCells() as cell (cell.id)}
 								<Table.Cell
-									style={cell.column.columnDef.size ? `width: ${cell.column.columnDef.size}px` : 'width: 100%'}
-									class={cell.column.id === 'actions' ? 'pl-4 pt-4 pb-4 pr-0' : ''}
+									style={cell.column.columnDef.size && cell.column.id !== 'actions' ? `width: ${cell.column.columnDef.size}px` : ''}
+									class={cell.column.id === 'actions' ? 'w-12 text-right pr-2' : ''}
 								>
 									<FlexRender
 										content={cell.column.columnDef.cell}
