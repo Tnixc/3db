@@ -35,9 +35,18 @@ export async function initializeApp(token: string, userLogin: string, userEmail:
 
 			console.log('[Init] Step 3: Loading repositories');
 			const allRepos = await github.getRepositories(config);
+
+			// Always include 3db-service repo
+			const serviceRepo = allRepos.find(repo => repo.name === '3db-service');
 			const connectedRepos = allRepos.filter((repo) =>
 				config_data.connectedRepos.includes(repo.full_name)
 			);
+
+			// Add service repo at the beginning if not already included
+			if (serviceRepo && !connectedRepos.find(r => r.id === serviceRepo.id)) {
+				connectedRepos.unshift(serviceRepo);
+			}
+
 			repositories.set(connectedRepos);
 
 			console.log('[Init] Complete! Setting ready state');
