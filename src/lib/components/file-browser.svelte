@@ -335,7 +335,7 @@
 					onDelete: handleDelete
 				});
 			},
-			size: 50
+			size: 40
 		}
 	];
 
@@ -405,7 +405,7 @@
 							{#each headerGroup.headers as header (header.id)}
 								<Table.Head
 									colspan={header.colSpan}
-									class={header.column.id === 'actions' ? 'translate-x-4 pr-2' : 'translate-x-4'}
+									class={header.column.id === 'actions' ? 'translate-x-4 pl-4 pt-3 pb-3 pr-0' : 'translate-x-4'}
 									style={header.column.columnDef.size ? `width: ${header.column.columnDef.size}px` : 'width: 100%'}
 								>
 									{#if !header.isPlaceholder}
@@ -425,7 +425,7 @@
 							{#each row.getVisibleCells() as cell (cell.id)}
 								<Table.Cell
 									style={cell.column.columnDef.size ? `width: ${cell.column.columnDef.size}px` : 'width: 100%'}
-									class={cell.column.id === 'actions' ? 'pr-2' : ''}
+									class={cell.column.id === 'actions' ? 'pl-4 pt-4 pb-4 pr-0' : ''}
 								>
 									<FlexRender
 										content={cell.column.columnDef.cell}
