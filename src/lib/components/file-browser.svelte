@@ -3,9 +3,15 @@
 	import {
 		type ColumnDef,
 		type SortingState,
+		type ColumnMeta,
 		getCoreRowModel,
 		getSortedRowModel
 	} from '@tanstack/table-core';
+
+	interface CustomColumnMeta extends ColumnMeta<FileContent, unknown> {
+		headerClass?: string;
+		cellClass?: string;
+	}
 	import { createSvelteTable, FlexRender } from '$lib/components/ui/data-table/index.js';
 	import * as Table from '$lib/components/ui/table/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
@@ -16,6 +22,7 @@
 	import { currentRepository } from '$lib/stores/repositories';
 	import { authStore } from '$lib/stores/auth';
 	import { getContents, deleteFile, deleteFolder, createFile } from '$lib/services/github';
+	import { toast } from 'svelte-sonner';
 
 	let {
 		currentPath = $bindable(''),
@@ -106,15 +113,17 @@
 				);
 			}
 			await loadFiles();
+			toast.success(`Deleted ${file.name}`);
 		} catch (err) {
 			console.error('Failed to delete:', err);
-			alert('Failed to delete file/folder');
+			toast.error('Failed to delete file/folder');
 		}
 	}
 
 	function copyLink(file: FileContent) {
 		if (file.download_url) {
 			navigator.clipboard.writeText(file.download_url);
+			toast.success('CDN link copied to clipboard');
 		}
 	}
 
@@ -136,9 +145,10 @@
 			// Decode base64 content
 			const content = fileData.content ? atob(fileData.content) : '';
 			await navigator.clipboard.writeText(content);
+			toast.success('File contents copied to clipboard');
 		} catch (err) {
 			console.error('Failed to copy contents:', err);
-			alert('Failed to copy file contents');
+			toast.error('Failed to copy file contents');
 		}
 	}
 
@@ -191,12 +201,13 @@
 				);
 
 				await loadFiles();
+				toast.success(`Renamed ${file.name} to ${newName}`);
 			} else {
-				alert('Renaming folders is not supported yet');
+				toast.error('Renaming folders is not supported yet');
 			}
 		} catch (err) {
 			console.error('Failed to rename:', err);
-			alert('Failed to rename file');
+			toast.error('Failed to rename file');
 		}
 	}
 
@@ -256,6 +267,10 @@
 		{
 			id: 'actions',
 			header: '',
+			meta: {
+				headerClass: 'text-right',
+				cellClass: 'text-right'
+			},
 			cell: ({ row }) => {
 				const file = row.original;
 				return renderComponent(FileActionsMenu, {
@@ -319,7 +334,7 @@
 					{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
 						<Table.Row>
 							{#each headerGroup.headers as header (header.id)}
-								<Table.Head>
+								<Table.Head class={(header.column.columnDef.meta as CustomColumnMeta)?.headerClass || ''}>
 									{#if !header.isPlaceholder}
 										<FlexRender
 											content={header.column.columnDef.header}
@@ -335,7 +350,7 @@
 					{#each table.getRowModel().rows as row (row.id)}
 						<Table.Row>
 							{#each row.getVisibleCells() as cell (cell.id)}
-								<Table.Cell>
+								<Table.Cell class={(cell.column.columnDef.meta as CustomColumnMeta)?.cellClass || ''}>
 									<FlexRender
 										content={cell.column.columnDef.cell}
 										context={cell.getContext()}
