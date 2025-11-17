@@ -11,12 +11,13 @@
 {#if file.type === 'dir'}
 	<Button
 		variant="ghost"
-		class="h-auto p-0 hover:bg-transparent"
+		class="group/row h-auto p-0 hover:bg-transparent"
 		onclick={() => onNavigate(file.path)}
 	>
 		<div class="flex items-center gap-2">
 			<Icon {icon} class="size-4 shrink-0" />
-			<span>{file.name}</span>
+			<span class="flex-1">{file.name}</span>
+			<Icon icon="lucide:chevron-right" class="size-4 shrink-0 opacity-0 transition-opacity group-hover/row:opacity-100" />
 		</div>
 	</Button>
 {:else}

@@ -140,12 +140,12 @@
 						<span class="font-medium">{$currentRepository.name}</span>
 						<Button
 							variant="ghost"
-							size="sm"
-							class="h-7 gap-1.5 px-2 text-sm"
+							size="icon"
+							class="h-7 w-7"
 							onclick={() => window.open(`https://github.com/${$currentRepository.owner.login}/${$currentRepository.name}`, '_blank')}
 						>
 							<Icon icon="lucide:external-link" class="size-3.5" />
-							Open on GitHub
+							<span class="sr-only">Open on GitHub</span>
 						</Button>
 					</div>
 				{:else}
