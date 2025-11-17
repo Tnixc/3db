@@ -1,22 +1,12 @@
-import { writable, derived, get } from 'svelte/store';
+import { writable, derived } from 'svelte/store';
 import { browser } from '$app/environment';
 
 /**
- * SECURITY WARNING: Storing tokens in localStorage is insecure
- * - Vulnerable to XSS attacks
- * - Accessible by browser extensions
- * - No automatic expiration
- *
- * TODO: Migrate to httpOnly cookies with server-side session management
- * See SECURITY_AUDIT.md for details
+ * OAuth-based authentication using secure httpOnly cookies
+ * - Token stored in httpOnly cookie (not accessible by JavaScript)
+ * - Protected from XSS attacks and browser extensions
+ * - Automatic expiration handled by cookie
  */
-
-const GITHUB_TOKEN_KEY = '3db_github_token';
-const GITHUB_USER_KEY = '3db_github_user';
-const TOKEN_TIMESTAMP_KEY = '3db_token_timestamp';
-
-// Token expiration: 30 days (reasonable for PATs)
-const TOKEN_EXPIRATION_MS = 30 * 24 * 60 * 60 * 1000;
 
 export interface GitHubUser {
 	login: string;
@@ -34,79 +24,79 @@ export type AuthState =
 	| { status: 'error'; error: string; token: string; user: GitHubUser };
 
 /**
- * Check if a stored token has expired
+ * Read user from cookie (user info is in a readable cookie for UI)
  */
-function isTokenExpired(): boolean {
-	if (!browser) return false;
+function getUserFromCookie(): GitHubUser | null {
+	if (!browser) return null;
 
-	const timestamp = localStorage.getItem(TOKEN_TIMESTAMP_KEY);
-	if (!timestamp) return true; // No timestamp = expired
+	const cookies = document.cookie.split('; ');
+	const userCookie = cookies.find((c) => c.startsWith('github_user='));
 
-	const tokenAge = Date.now() - parseInt(timestamp, 10);
-	return tokenAge > TOKEN_EXPIRATION_MS;
+	if (userCookie) {
+		try {
+			const encoded = userCookie.split('=')[1];
+			return JSON.parse(decodeURIComponent(encoded));
+		} catch {
+			return null;
+		}
+	}
+
+	return null;
 }
 
 /**
- * Clear all stored authentication data
+ * Check if user has a token cookie (httpOnly, not directly accessible)
  */
-function clearStoredAuth() {
-	if (!browser) return;
+function hasTokenCookie(): boolean {
+	if (!browser) return false;
 
-	localStorage.removeItem(GITHUB_TOKEN_KEY);
-	localStorage.removeItem(GITHUB_USER_KEY);
-	localStorage.removeItem(TOKEN_TIMESTAMP_KEY);
+	// We can't read the httpOnly cookie directly, but if user cookie exists,
+	// the token cookie should exist too (both set together)
+	return getUserFromCookie() !== null;
 }
 
 function createAuthStore() {
-	// Initialize from localStorage
-	const initialToken = browser ? localStorage.getItem(GITHUB_TOKEN_KEY) : null;
-	const initialUser = browser ? JSON.parse(localStorage.getItem(GITHUB_USER_KEY) || 'null') : null;
+	// Initialize from cookie
+	const initialUser = browser ? getUserFromCookie() : null;
 
-	// Check token expiration
-	let initialState: AuthState;
-	if (initialToken && initialUser) {
-		if (isTokenExpired()) {
-			console.warn('Stored token has expired, clearing authentication');
-			clearStoredAuth();
-			initialState = { status: 'logged_out' };
-		} else {
-			initialState = { status: 'logged_in', token: initialToken, user: initialUser };
-		}
-	} else {
-		initialState = { status: 'logged_out' };
-	}
+	// Note: token is not accessible from client (httpOnly cookie)
+	// We use a placeholder 'cookie' string to indicate token is in httpOnly cookie
+	const initialState: AuthState = initialUser && hasTokenCookie()
+		? { status: 'logged_in', token: 'cookie', user: initialUser }
+		: { status: 'logged_out' };
 
 	const { subscribe, set, update } = writable<AuthState>(initialState);
 
 	return {
 		subscribe,
 
-		async login(token: string) {
-			set({ status: 'logging_in' });
-
-			try {
-				const user = await fetchGitHubUser(token);
-
-				if (browser) {
-					localStorage.setItem(GITHUB_TOKEN_KEY, token);
-					localStorage.setItem(GITHUB_USER_KEY, JSON.stringify(user));
-					localStorage.setItem(TOKEN_TIMESTAMP_KEY, Date.now().toString());
-				}
-
-				set({ status: 'logged_in', token, user });
-			} catch (error) {
-				set({ status: 'logged_out' });
-				throw error;
+		/**
+		 * Login redirects to OAuth flow
+		 * Token will be set in httpOnly cookie by server
+		 */
+		login() {
+			if (browser) {
+				window.location.href = '/auth/login';
 			}
 		},
 
-		logout() {
-			clearStoredAuth();
-			set({ status: 'logged_out' });
+		/**
+		 * Logout calls server endpoint to clear httpOnly cookie
+		 */
+		async logout() {
+			try {
+				await fetch('/auth/logout', {
+					method: 'POST',
+					credentials: 'same-origin'
+				});
+				set({ status: 'logged_out' });
+			} catch (error) {
+				console.error('Logout failed:', error);
+			}
 		},
 
 		setInitializing() {
-			update(state => {
+			update((state) => {
 				if (state.status === 'logged_in') {
 					return { ...state, status: 'initializing' };
 				}
@@ -115,7 +105,7 @@ function createAuthStore() {
 		},
 
 		setReady() {
-			update(state => {
+			update((state) => {
 				if (state.status === 'initializing' || state.status === 'logged_in') {
 					return { ...state, status: 'ready' };
 				}
@@ -124,7 +114,7 @@ function createAuthStore() {
 		},
 
 		setError(error: string) {
-			update(state => {
+			update((state) => {
 				if (state.status !== 'logged_out' && state.status !== 'logging_in') {
 					return { ...state, status: 'error', error };
 				}
@@ -137,40 +127,16 @@ function createAuthStore() {
 export const authStore = createAuthStore();
 
 // Derived stores for convenience
-export const user = derived(authStore, $auth =>
+export const user = derived(authStore, ($auth) =>
 	$auth.status !== 'logged_out' && $auth.status !== 'logging_in' ? $auth.user : null
 );
 
-export const token = derived(authStore, $auth =>
+export const token = derived(authStore, ($auth) =>
 	$auth.status !== 'logged_out' && $auth.status !== 'logging_in' ? $auth.token : null
 );
 
-export const isLoggedIn = derived(authStore, $auth =>
+export const isLoggedIn = derived(authStore, ($auth) =>
 	$auth.status !== 'logged_out' && $auth.status !== 'logging_in'
 );
 
-export const isReady = derived(authStore, $auth =>
-	$auth.status === 'ready'
-);
-
-// Helper function to fetch GitHub user info
-async function fetchGitHubUser(token: string): Promise<GitHubUser> {
-	const response = await fetch('https://api.github.com/user', {
-		headers: {
-			Authorization: `Bearer ${token}`,
-			Accept: 'application/vnd.github.v3+json'
-		}
-	});
-
-	if (!response.ok) {
-		throw new Error('Failed to fetch GitHub user information');
-	}
-
-	const data = await response.json();
-	return {
-		login: data.login,
-		name: data.name || data.login,
-		email: data.email || `${data.login}@users.noreply.github.com`,
-		avatar_url: data.avatar_url
-	};
-}
+export const isReady = derived(authStore, ($auth) => $auth.status === 'ready');

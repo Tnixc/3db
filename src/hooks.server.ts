@@ -1,6 +1,22 @@
 import type { Handle } from '@sveltejs/kit';
 
 export const handle: Handle = async ({ event, resolve }) => {
+	// Check for authentication in cookies
+	const token = event.cookies.get('github_token');
+	const userStr = event.cookies.get('github_user');
+
+	if (token && userStr) {
+		try {
+			const user = JSON.parse(userStr);
+			event.locals.token = token;
+			event.locals.user = user;
+		} catch (error) {
+			// Invalid cookie data, clear it
+			event.cookies.delete('github_token', { path: '/' });
+			event.cookies.delete('github_user', { path: '/' });
+		}
+	}
+
 	const response = await resolve(event, {
 		filterSerializedResponseHeaders(name) {
 			return name === 'content-range';
