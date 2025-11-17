@@ -41,6 +41,19 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 		}
 
 		const accessToken = tokenData.access_token;
+		const scope = tokenData.scope || '';
+
+		// Log the received scopes for debugging
+		console.log('[Auth] Received token with scopes:', scope);
+
+		// Validate that we have the 'repo' scope (GitHub returns space-separated scopes)
+		const scopes = scope.split(' ').filter((s: string) => s.length > 0);
+		if (!scopes.includes('repo') && !scopes.includes('public_repo')) {
+			console.error('[Auth] Missing required "repo" or "public_repo" scope. Received scopes:', scope);
+			console.error('[Auth] Please ensure the GitHub OAuth App has the correct permissions configured.');
+			console.error('[Auth] Visit https://github.com/settings/developers to check your OAuth App settings.');
+			throw redirect(302, '/?error=insufficient_permissions');
+		}
 
 		// Verify token and get user info
 		const userResponse = await fetch('https://api.github.com/user', {
@@ -53,6 +66,21 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 		if (!userResponse.ok) {
 			console.error('Failed to fetch user info');
 			throw redirect(302, '/?error=user_fetch_failed');
+		}
+
+		// Check actual OAuth scopes from the response headers
+		const actualScopes = userResponse.headers.get('x-oauth-scopes') || '';
+		console.log('[Auth] Token actual scopes from API:', actualScopes);
+
+		// Verify we have write permissions
+		const actualScopeList = actualScopes.split(',').map((s: string) => s.trim());
+		if (!actualScopeList.includes('repo') && !actualScopeList.includes('public_repo')) {
+			console.error('[Auth] Token verification failed - missing write permissions');
+			console.error('[Auth] Token scopes:', actualScopes);
+			console.error(
+				'[Auth] IMPORTANT: You may need to revoke and re-authorize the app at https://github.com/settings/applications'
+			);
+			throw redirect(302, '/?error=token_verification_failed');
 		}
 
 		const userData = await userResponse.json();

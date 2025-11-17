@@ -3,13 +3,42 @@
 	import Github from 'lucide-svelte/icons/github';
 	import ShieldCheck from 'lucide-svelte/icons/shield-check';
 	import Info from 'lucide-svelte/icons/info';
+	import AlertCircle from 'lucide-svelte/icons/alert-circle';
 	import { authStore } from '$lib/stores/auth';
-</script>
+	import { page } from '$app/stores';
+
+	// Check for OAuth error in URL
+	$: errorParam = $page.url.searchParams.get('error');
+	$: errorMessage = errorParam
+		? {
+				oauth_failed: 'OAuth authentication failed. Please try again.',
+				token_exchange_failed: 'Failed to exchange OAuth code for token. Please try again.',
+				user_fetch_failed: 'Failed to fetch user information from GitHub.',
+				insufficient_permissions:
+					'GitHub did not grant the required "repo" permission. Please check your GitHub OAuth App configuration at https://github.com/settings/developers',
+				token_verification_failed:
+					'The GitHub token does not have required write permissions. You may need to revoke and re-authorize this app at https://github.com/settings/applications',
+				auth_failed: 'Authentication failed. Please try again.'
+			}[errorParam] || 'An unknown error occurred during authentication.'
+		: null;
+
 
 <div class="p-8">
 	<h1 class="mb-4 text-3xl font-bold">3db</h1>
 
 	<div class="mb-6 max-w-xl space-y-4">
+		{#if errorMessage}
+			<div class="rounded-lg border border-destructive bg-destructive/10 p-4">
+				<h3 class="mb-2 flex items-center gap-2 font-medium text-destructive">
+					<AlertCircle class="h-4 w-4" />
+					Authentication Error
+				</h3>
+				<p class="text-sm text-destructive">
+					{errorMessage}
+				</p>
+			</div>
+		{/if}
+
 		<div>
 			<h2 class="mb-2 text-xl font-semibold">Login with GitHub</h2>
 			<p class="text-sm text-muted-foreground">
