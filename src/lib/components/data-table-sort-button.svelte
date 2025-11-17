@@ -23,6 +23,8 @@
 >
 	<div class="flex items-center gap-2">
 		<span>{children}</span>
+        <span class="w-4">
 		<Icon {icon} class="size-4 shrink-0 {!isSorted ? 'opacity-50' : ''}" />
+        </span>
 	</div>
 </Button>
