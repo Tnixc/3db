@@ -23,6 +23,48 @@
 	let error = $state<string | null>(null);
 	let uploadProgress = $state<string>('');
 
+	// Security: File upload constraints
+	const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB (GitHub recommended limit)
+	const BLOCKED_EXTENSIONS = ['.exe', '.bat', '.cmd', '.sh', '.ps1', '.scr', '.msi', '.dll'];
+
+	function sanitizeFilename(filename: string): string {
+		// Remove path separators and path traversal attempts
+		return filename
+			.replace(/\.\./g, '')
+			.replace(/[\/\\]/g, '_')
+			.replace(/^\.+/, '') // Remove leading dots
+			.trim();
+	}
+
+	function validateFile(file: File): { valid: boolean; error?: string } {
+		// Check file size
+		if (file.size > MAX_FILE_SIZE) {
+			return {
+				valid: false,
+				error: `File "${file.name}" exceeds 100MB limit (${(file.size / 1024 / 1024).toFixed(2)}MB)`
+			};
+		}
+
+		// Check for blocked extensions
+		const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+		if (BLOCKED_EXTENSIONS.includes(ext)) {
+			return {
+				valid: false,
+				error: `File type "${ext}" is blocked for security reasons`
+			};
+		}
+
+		// Check filename validity
+		if (file.name.includes('..') || file.name.includes('/') || file.name.includes('\\')) {
+			return {
+				valid: false,
+				error: `Invalid filename: "${file.name}"`
+			};
+		}
+
+		return { valid: true };
+	}
+
 	async function handleUpload() {
 		if (!files || files.length === 0) {
 			error = 'Please select at least one file';
@@ -38,11 +80,22 @@
 			const config = { token: $authStore.token, userEmail: $authStore.user.email };
 			const fileArray = Array.from(files);
 
+			// Validate all files before uploading
+			for (const file of fileArray) {
+				const validation = validateFile(file);
+				if (!validation.valid) {
+					error = validation.error || 'Invalid file';
+					loading = false;
+					return;
+				}
+			}
+
 			for (let i = 0; i < fileArray.length; i++) {
 				const file = fileArray[i];
-				uploadProgress = `Uploading ${i + 1}/${fileArray.length}: ${file.name}`;
+				const sanitizedName = sanitizeFilename(file.name);
+				uploadProgress = `Uploading ${i + 1}/${fileArray.length}: ${sanitizedName}`;
 
-				const path = currentPath ? `${currentPath}/${file.name}` : file.name;
+				const path = currentPath ? `${currentPath}/${sanitizedName}` : sanitizedName;
 				const content = await file.arrayBuffer();
 
 				await createFile(
@@ -96,8 +149,12 @@
 					disabled={loading}
 					onchange={(e) => {
 						files = e.currentTarget.files;
+						error = null;
 					}}
 				/>
+				<p class="text-xs text-muted-foreground">
+					Max file size: 100MB. Executable files (.exe, .bat, .sh, etc.) are blocked.
+				</p>
 				{#if files && files.length > 0}
 					<p class="text-sm text-muted-foreground">{files.length} file(s) selected</p>
 				{/if}
