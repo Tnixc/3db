@@ -1,12 +1,14 @@
 <script lang="ts">
 	import '../app.css';
 	import { onMount } from 'svelte';
+	import { ModeWatcher } from 'mode-watcher';
 	import { authStore } from '$lib/stores/auth';
 	import { initializeApp, resetInitialization } from '$lib/services/init';
 	import { currentRepository, repositories } from '$lib/stores/repositories';
 	import CreateRepoDialog from '$lib/components/create-repo-dialog.svelte';
 	import UserMenu from '$lib/components/user-menu.svelte';
 	import RepoContextMenu from '$lib/components/repo-context-menu.svelte';
+	import ModeToggle from '$lib/components/mode-toggle.svelte';
 	import { Button } from '$lib/components/ui/button';
 	import * as ScrollArea from '$lib/components/ui/scroll-area';
 	import Icon from '@iconify/svelte';
@@ -44,6 +46,8 @@
 		sidebarOpen = !sidebarOpen;
 	}
 </script>
+
+<ModeWatcher />
 
 {#if $authStore.status === 'logged_out' || $authStore.status === 'logging_in'}
 	{@render children()}
@@ -145,8 +149,9 @@
 						</Button>
 					</div>
 				{:else}
-					<span class="text-muted-foreground">Select a repository to get started</span>
+					<span class="flex-1 text-muted-foreground">Select a repository to get started</span>
 				{/if}
+				<ModeToggle />
 			</header>
 
 			<!-- Page Content -->
