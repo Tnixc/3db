@@ -11,7 +11,7 @@
 	import ArrowLeft from 'lucide-svelte/icons/arrow-left';
 	import RefreshCw from 'lucide-svelte/icons/refresh-cw';
 	import Upload from 'lucide-svelte/icons/upload';
-	import LoaderCircle from 'lucide-svelte/icons/loader-circle';
+	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { createRawSnippet } from 'svelte';
 	import { renderSnippet, renderComponent } from '$lib/components/ui/data-table/index.js';
 	import { currentRepository } from '$lib/stores/repositories';
@@ -418,8 +418,12 @@
 	</div>
 
 	{#if loading}
-		<div class="flex h-64 items-center justify-center">
-			<LoaderCircle class="size-8 animate-spin text-primary" />
+		<div class="space-y-2">
+			<Skeleton class="h-12 w-full" />
+			<Skeleton class="h-12 w-full" />
+			<Skeleton class="h-12 w-full" />
+			<Skeleton class="h-12 w-full" />
+			<Skeleton class="h-12 w-full" />
 		</div>
 	{:else if error}
 		<div class="flex h-64 items-center justify-center">

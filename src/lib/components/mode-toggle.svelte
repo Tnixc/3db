@@ -9,12 +9,12 @@
 
 <DropdownMenu.Root>
 	<DropdownMenu.Trigger class={buttonVariants({ variant: 'outline', size: 'icon' })}>
-		{#if $mode === 'light'}
-			<Sun class="h-[1.2rem] w-[1.2rem]" />
-		{:else if $mode === 'dark'}
-			<Moon class="h-[1.2rem] w-[1.2rem]" />
+		{#if mode.current === 'light'}
+			<Sun class="size-5" />
+		{:else if mode.current === 'dark'}
+			<Moon class="size-5" />
 		{:else}
-			<Monitor class="h-[1.2rem] w-[1.2rem]" />
+			<Monitor class="size-5" />
 		{/if}
 		<span class="sr-only">Toggle theme</span>
 	</DropdownMenu.Trigger>

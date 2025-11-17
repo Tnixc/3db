@@ -10,7 +10,7 @@
 	import AppSidebar from '$lib/components/app-sidebar.svelte';
 	import * as Sidebar from '$lib/components/ui/sidebar';
 	import { Button } from '$lib/components/ui/button';
-	import LoaderCircle from 'lucide-svelte/icons/loader-circle';
+	import { Skeleton } from '$lib/components/ui/skeleton';
 	import AlertCircle from 'lucide-svelte/icons/alert-circle';
 	import Database from 'lucide-svelte/icons/database';
 	import ExternalLink from 'lucide-svelte/icons/external-link';
@@ -50,17 +50,26 @@
 	{@render children()}
 {:else if $authStore.status === 'logged_in' || $authStore.status === 'initializing'}
 	<div class="flex h-screen items-center justify-center">
-		<div class="text-center">
-			<LoaderCircle class="mx-auto mb-4 h-12 w-12 animate-spin text-primary" />
-			<h2 class="mb-2 text-xl font-semibold">Setting up your workspace</h2>
-			<p class="text-muted-foreground">
-				{#if $authStore.status === 'logged_in'}
-					Starting initialization...
-				{:else}
-					Creating service repository and loading data...
-				{/if}
-			</p>
-			<p class="mt-2 text-sm text-muted-foreground">This may take 15-30 seconds</p>
+		<div class="w-full max-w-md space-y-6 px-4">
+			<div class="text-center">
+				<h2 class="mb-2 text-xl font-semibold">Setting up your workspace</h2>
+				<p class="text-muted-foreground text-sm">
+					{#if $authStore.status === 'logged_in'}
+						Starting initialization...
+					{:else}
+						Creating service repository and loading data...
+					{/if}
+				</p>
+				<p class="mt-2 text-sm text-muted-foreground">This may take 15-30 seconds</p>
+			</div>
+			<div class="space-y-4">
+				<Skeleton class="h-24 w-full" />
+				<div class="space-y-2">
+					<Skeleton class="h-12 w-full" />
+					<Skeleton class="h-12 w-full" />
+					<Skeleton class="h-12 w-full" />
+				</div>
+			</div>
 		</div>
 	</div>
 {:else if $authStore.status === 'error'}
