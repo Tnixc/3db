@@ -42,6 +42,29 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 
 		const accessToken = tokenData.access_token;
 
+		// Log the scopes we received (helps with debugging permission issues)
+		console.log('[Auth] Received token with scopes:', tokenData.scope);
+
+		// Validate that we received the required scopes
+		const receivedScopes = tokenData.scope || '';
+		const requiredScopes = ['repo'];
+		const hasRequiredScopes = requiredScopes.every((scope) =>
+			receivedScopes.split(',').includes(scope)
+		);
+
+		if (!hasRequiredScopes) {
+			console.error(
+				'OAuth app did not grant required scopes. Received:',
+				receivedScopes,
+				'Required:',
+				requiredScopes.join(', ')
+			);
+			throw redirect(
+				302,
+				'/?error=insufficient_scopes&received=' + encodeURIComponent(receivedScopes)
+			);
+		}
+
 		// Verify token and get user info
 		const userResponse = await fetch('https://api.github.com/user', {
 			headers: {
@@ -56,6 +79,25 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 		}
 
 		const userData = await userResponse.json();
+
+		// Ensure we have user email (required for commits)
+		if (!userData.email) {
+			// Fetch user emails separately
+			const emailsResponse = await fetch('https://api.github.com/user/emails', {
+				headers: {
+					Authorization: `Bearer ${accessToken}`,
+					Accept: 'application/vnd.github.v3+json'
+				}
+			});
+
+			if (emailsResponse.ok) {
+				const emails = await emailsResponse.json();
+				const primaryEmail = emails.find((e: any) => e.primary);
+				if (primaryEmail) {
+					userData.email = primaryEmail.email;
+				}
+			}
+		}
 
 		// Set httpOnly cookie for token (secure, not accessible by JavaScript)
 		cookies.set('github_token', accessToken, {
