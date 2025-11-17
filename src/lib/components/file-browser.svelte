@@ -154,10 +154,6 @@
 					'Content-Type': 'application/json'
 				},
 				body: JSON.stringify({
-					owner: $currentRepository.owner.login,
-					repo: $currentRepository.name,
-					path: file.path,
-					sha: file.sha,
 					download_url: file.download_url
 				}),
 				credentials: 'same-origin'
