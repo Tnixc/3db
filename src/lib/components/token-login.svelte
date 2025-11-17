@@ -1,28 +1,7 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
-	import { Input } from '$lib/components/ui/input';
 	import Icon from '@iconify/svelte';
 	import { authStore } from '$lib/stores/auth';
-
-	let token = $state('');
-	let error = $state<string | null>(null);
-
-	const isLoading = $derived($authStore.status === 'logging_in');
-
-	async function handleLogin() {
-		if (!token.trim()) {
-			error = 'Please enter a token';
-			return;
-		}
-
-		error = null;
-		try {
-			await authStore.login(token);
-		} catch (err) {
-			error = 'Invalid token or unable to fetch user information';
-			console.error('Login error:', err);
-		}
-	}
 </script>
 
 <div class="p-8">
@@ -30,64 +9,42 @@
 
 	<div class="mb-6 max-w-xl space-y-4">
 		<div>
-			<h2 class="mb-2 text-xl font-semibold">Login with GitHub Token</h2>
-			<p class="text-muted-foreground text-sm">
-				Enter your GitHub Personal Access Token to get started. The token is stored locally in your
-				browser.
+			<h2 class="mb-2 text-xl font-semibold">Login with GitHub</h2>
+			<p class="text-sm text-muted-foreground">
+				Use GitHub OAuth to securely authenticate and access your repositories.
 			</p>
 		</div>
 
 		<div class="space-y-2">
-			<Input
-				type="password"
-				bind:value={token}
-				placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
-				disabled={isLoading}
-				onkeydown={(e) => {
-					if (e.key === 'Enter') handleLogin();
-				}}
-			/>
-			{#if error}
-				<p class="text-destructive text-sm">{error}</p>
-			{/if}
-			<Button class="w-full" onclick={handleLogin} disabled={isLoading || !token.trim()}>
-				{#if isLoading}
-					<Icon icon="lucide:loader-2" class="mr-2 h-4 w-4 animate-spin" />
-					Verifying...
-				{:else}
-					<Icon icon="lucide:log-in" class="mr-2 h-4 w-4" />
-					Login
-				{/if}
+			<Button class="w-full" onclick={() => authStore.login()}>
+				<Icon icon="lucide:github" class="mr-2 h-4 w-4" />
+				Continue with GitHub
 			</Button>
 		</div>
 
-		<div class="rounded-lg border border-accent bg-accent p-4">
-			<h3 class="mb-2 flex items-center gap-2 font-medium text-accent-foreground">
+		<div class="rounded-lg border border-green-500/20 bg-green-500/10 p-4">
+			<h3 class="mb-2 flex items-center gap-2 font-medium text-green-700 dark:text-green-300">
+				<Icon icon="lucide:shield-check" class="h-4 w-4" />
+				Secure OAuth Authentication
+			</h3>
+			<ul class="list-inside list-disc space-y-1 text-sm text-green-600 dark:text-green-400">
+				<li>Your access token is stored in secure httpOnly cookies</li>
+				<li>Protected from XSS attacks and browser extensions</li>
+				<li>No token management required - just click to login</li>
+			</ul>
+		</div>
+
+		<div class="rounded-lg border border-blue-500/20 bg-blue-500/10 p-4">
+			<h3 class="mb-2 flex items-center gap-2 font-medium text-blue-700 dark:text-blue-300">
 				<Icon icon="lucide:info" class="h-4 w-4" />
 				After logging in
 			</h3>
-			<ol class="list-inside list-decimal space-y-1 text-sm text-accent-foreground">
+			<ol class="list-inside list-decimal space-y-1 text-sm text-blue-600 dark:text-blue-400">
+				<li>You'll be redirected to GitHub to authorize 3db</li>
+				<li>Grant access to your repositories (repo scope)</li>
 				<li>Initial setup may take 15-30 seconds</li>
-				<li>A repository called '3db-service' will be created to store metadata</li>
-				<li>You'll see a loading screen while we set everything up</li>
+				<li>A repository called '3db-service' will be created for metadata</li>
 				<li>Once ready, you can start managing your repositories!</li>
-			</ol>
-		</div>
-
-		<div class="bg-muted rounded-lg p-4">
-			<h3 class="mb-2 font-medium">How to create a GitHub token:</h3>
-			<ol class="text-muted-foreground list-inside list-decimal space-y-1 text-sm">
-				<li>
-					Go to <a
-						href="https://github.com/settings/tokens/new"
-						target="_blank"
-						class="hover:text-primary underline">GitHub Token Settings</a
-					>
-				</li>
-				<li>Click "Generate new token (classic)"</li>
-				<li>Give it a name (e.g., "3db access")</li>
-				<li>Select scopes: <code class="bg-background rounded px-1">repo</code> (all)</li>
-				<li>Click "Generate token" and copy it</li>
 			</ol>
 		</div>
 	</div>

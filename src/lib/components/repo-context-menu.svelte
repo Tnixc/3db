@@ -3,7 +3,6 @@
 	import { Button } from '$lib/components/ui/button/index.js';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 	import Icon from '@iconify/svelte';
-	import { deleteRepository } from '$lib/services/github';
 	import { authStore } from '$lib/stores/auth';
 	import { repositories, currentRepository } from '$lib/stores/repositories';
 
@@ -26,8 +25,15 @@
 		if ($authStore.status !== 'ready') return;
 
 		try {
-			const config = { token: $authStore.token, userEmail: $authStore.user.email };
-			await deleteRepository(config, repo.owner.login, repo.name);
+			// Use server API to delete repository (accesses httpOnly cookie)
+			const response = await fetch(`/api/repos/${repo.owner.login}/${repo.name}`, {
+				method: 'DELETE',
+				credentials: 'same-origin'
+			});
+
+			if (!response.ok) {
+				throw new Error(`Failed to delete repository: ${response.statusText}`);
+			}
 
 			// Update stores
 			repositories.update((repos) => repos.filter((r) => r.id !== repo.id));

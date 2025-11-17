@@ -4,9 +4,13 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import Icon from '@iconify/svelte';
-	import { createFile } from '$lib/services/github';
 	import { authStore } from '$lib/stores/auth';
 	import { currentRepository } from '$lib/stores/repositories';
+	import {
+		sanitizeFilename,
+		validateFileSize,
+		isBlockedFileExtension
+	} from '$lib/utils/security';
 
 	let {
 		open = $bindable(false),
@@ -23,6 +27,33 @@
 	let error = $state<string | null>(null);
 	let uploadProgress = $state<string>('');
 
+	function validateFile(file: File): { valid: boolean; error?: string } {
+		// Check file size
+		const sizeValidation = validateFileSize(file.size);
+		if (!sizeValidation.valid) {
+			return { valid: false, error: `"${file.name}": ${sizeValidation.error}` };
+		}
+
+		// Check for blocked extensions
+		if (isBlockedFileExtension(file.name)) {
+			const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
+			return {
+				valid: false,
+				error: `File type "${ext}" is blocked for security reasons`
+			};
+		}
+
+		// Check filename validity
+		if (file.name.includes('..') || file.name.includes('/') || file.name.includes('\\')) {
+			return {
+				valid: false,
+				error: `Invalid filename: "${file.name}"`
+			};
+		}
+
+		return { valid: true };
+	}
+
 	async function handleUpload() {
 		if (!files || files.length === 0) {
 			error = 'Please select at least one file';
@@ -35,23 +66,45 @@
 		error = null;
 
 		try {
-			const config = { token: $authStore.token, userEmail: $authStore.user.email };
 			const fileArray = Array.from(files);
+
+			// Validate all files before uploading
+			for (const file of fileArray) {
+				const validation = validateFile(file);
+				if (!validation.valid) {
+					error = validation.error || 'Invalid file';
+					loading = false;
+					return;
+				}
+			}
 
 			for (let i = 0; i < fileArray.length; i++) {
 				const file = fileArray[i];
-				uploadProgress = `Uploading ${i + 1}/${fileArray.length}: ${file.name}`;
+				const sanitizedName = sanitizeFilename(file.name);
+				uploadProgress = `Uploading ${i + 1}/${fileArray.length}: ${sanitizedName}`;
 
-				const path = currentPath ? `${currentPath}/${file.name}` : file.name;
+				const path = currentPath ? `${currentPath}/${sanitizedName}` : sanitizedName;
 				const content = await file.arrayBuffer();
 
-				await createFile(
-					config,
-					$currentRepository.owner.login,
-					$currentRepository.name,
-					path,
-					content
+				// Use server API to upload file (accesses httpOnly cookie)
+				const response = await fetch(
+					`/api/repos/${$currentRepository.owner.login}/${$currentRepository.name}/contents`,
+					{
+						method: 'PUT',
+						headers: {
+							'Content-Type': 'application/json'
+						},
+						body: JSON.stringify({
+							path,
+							content
+						}),
+						credentials: 'same-origin'
+					}
 				);
+
+				if (!response.ok) {
+					throw new Error(`Failed to upload ${sanitizedName}: ${response.statusText}`);
+				}
 			}
 
 			// Reset and close
@@ -98,8 +151,12 @@
 					disabled={loading}
 					onchange={(e) => {
 						files = e.currentTarget.files;
+						error = null;
 					}}
 				/>
+				<p class="text-xs text-muted-foreground">
+					Max file size: 100MB. Executable files (.exe, .bat, .sh, etc.) are blocked.
+				</p>
 				{#if files && files.length > 0}
 					<p class="text-sm text-muted-foreground">{files.length} file(s) selected</p>
 				{/if}

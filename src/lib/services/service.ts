@@ -1,6 +1,7 @@
 import type { ServiceConfig } from '$lib/types';
 import { DEFAULT_SERVICE_CONFIG, SERVICE_REPO_PATH, SERVICE_CONFIG_FILE } from '$lib/types';
 import * as github from './github';
+import { safeBase64Decode, safeJsonParse } from '$lib/utils/security';
 
 let isInitializing = false;
 let initPromise: Promise<any> | null = null;
@@ -72,8 +73,18 @@ async function _initializeServiceRepo(config: github.GitHubConfig) {
 
 		if (!Array.isArray(contents)) {
 			const fileContent = contents as { content: string; sha: string };
-			const configContent = atob(fileContent.content);
-			const existingConfig = JSON.parse(configContent);
+			const configContent = safeBase64Decode(fileContent.content);
+
+			if (!configContent) {
+				throw new Error('Failed to decode service config: invalid base64');
+			}
+
+			const existingConfig = safeJsonParse<ServiceConfig>(configContent, DEFAULT_SERVICE_CONFIG);
+
+			// Validate config structure
+			if (!existingConfig.connectedRepos || !Array.isArray(existingConfig.connectedRepos)) {
+				throw new Error('Invalid service config format: missing or invalid connectedRepos');
+			}
 
 			// Validate and clean connected repos
 			const validRepos = await validateAndCleanConnectedRepos(
@@ -141,10 +152,21 @@ export async function getServiceConfig(config: github.GitHubConfig): Promise<Ser
 
 	if (Array.isArray(contents)) throw new Error('Unexpected contents format');
 
-	// Add a type assertion here
 	const fileContent = contents as { content: string };
-	const configContent = atob(fileContent.content);
-	return JSON.parse(configContent);
+	const configContent = safeBase64Decode(fileContent.content);
+
+	if (!configContent) {
+		throw new Error('Failed to decode service config: invalid base64');
+	}
+
+	const parsedConfig = safeJsonParse<ServiceConfig>(configContent, DEFAULT_SERVICE_CONFIG);
+
+	// Validate config structure
+	if (!parsedConfig.connectedRepos || !Array.isArray(parsedConfig.connectedRepos)) {
+		throw new Error('Invalid service config format: missing or invalid connectedRepos');
+	}
+
+	return parsedConfig;
 }
 
 export async function updateServiceConfig(

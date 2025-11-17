@@ -4,9 +4,9 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import Icon from '@iconify/svelte';
-	import { createRepository } from '$lib/services/github';
 	import { authStore } from '$lib/stores/auth';
 	import { repositories } from '$lib/stores/repositories';
+	import { validateRepositoryName } from '$lib/utils/security';
 
 	let { open = $bindable(false) }: { open?: boolean } = $props();
 
@@ -15,8 +15,12 @@
 	let error = $state<string | null>(null);
 
 	async function handleCreate() {
-		if (!repoName.trim()) {
-			error = 'Repository name is required';
+		const trimmedName = repoName.trim();
+
+		// Validate repository name
+		const validation = validateRepositoryName(trimmedName);
+		if (!validation.valid) {
+			error = validation.error || 'Invalid repository name';
 			return;
 		}
 
@@ -26,8 +30,21 @@
 		error = null;
 
 		try {
-			const config = { token: $authStore.token, userEmail: $authStore.user.email };
-			const newRepo = await createRepository(config, repoName.trim());
+			// Use server API to create repository (accesses httpOnly cookie)
+			const response = await fetch('/api/repos', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({ name: trimmedName }),
+				credentials: 'same-origin'
+			});
+
+			if (!response.ok) {
+				throw new Error(`Failed to create repository: ${response.statusText}`);
+			}
+
+			const newRepo = await response.json();
 
 			// Add to repositories store
 			repositories.update((repos) => [...repos, newRepo]);
@@ -69,10 +86,16 @@
 					bind:value={repoName}
 					placeholder="my-cdn-files"
 					disabled={loading}
+					oninput={() => {
+						error = null;
+					}}
 					onkeydown={(e) => {
 						if (e.key === 'Enter') handleCreate();
 					}}
 				/>
+				<p class="text-xs text-muted-foreground">
+					Alphanumeric, hyphens, underscores, and periods only. Max 100 characters.
+				</p>
 				{#if error}
 					<p class="text-sm text-destructive">{error}</p>
 				{/if}
