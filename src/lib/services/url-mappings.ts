@@ -2,6 +2,7 @@ import * as github from './github';
 import type { GitHubConfig } from './github';
 import { SERVICE_REPO_PATH } from '$lib/types';
 import type { FileContent } from '$lib/types';
+import crypto from 'crypto';
 
 const MAPPINGS_FILE = 'url-mappings.json';
 
@@ -69,8 +70,6 @@ export class UrlMappingService {
 	 * Returns a URL-safe encrypted string
 	 */
 	encodeUrl(downloadUrl: string, encryptionKey: string): string {
-		const crypto = require('crypto');
-
 		// Create a 32-byte key from the encryption key
 		const key = crypto.createHash('sha256').update(encryptionKey).digest();
 
@@ -102,8 +101,6 @@ export class UrlMappingService {
 	 * Decrypt a URL from the encrypted string
 	 */
 	decodeUrl(encoded: string, encryptionKey: string): string {
-		const crypto = require('crypto');
-
 		// Convert from base64url to buffer
 		const base64 = encoded.replace(/-/g, '+').replace(/_/g, '/');
 		const padded = base64 + '=='.substring(0, (4 - (base64.length % 4)) % 4);
