@@ -23,8 +23,11 @@
 		</div>
 	</Button>
 {:else}
-	<div class="flex items-center gap-2">
+	<div class="flex w-full items-center gap-2">
 		<Icon {icon} class="size-4 shrink-0" />
-		<span>{file.name}</span>
+		<span class="flex-1 truncate text-left">{file.name}</span>
+		<div class="w-4 shrink-0" aria-hidden="true">
+			<!-- Empty spacer to match folder row layout -->
+		</div>
 	</div>
 {/if}
