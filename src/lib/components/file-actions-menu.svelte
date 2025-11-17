@@ -7,19 +7,22 @@
 	import Copy from 'lucide-svelte/icons/copy';
 	import Edit from 'lucide-svelte/icons/edit';
 	import Trash from 'lucide-svelte/icons/trash';
+	import Check from 'lucide-svelte/icons/check';
 
 	let {
 		file,
 		onCopyLink,
 		onCopyContents,
 		onRename,
-		onDelete
+		onDelete,
+		copiedLink = false
 	}: {
 		file: FileContent;
 		onCopyLink: (file: FileContent) => Promise<void>;
 		onCopyContents: (file: FileContent) => Promise<void>;
 		onRename: (file: FileContent) => Promise<void>;
 		onDelete: (file: FileContent) => Promise<void>;
+		copiedLink?: boolean;
 	} = $props();
 </script>
 
@@ -35,7 +38,11 @@
 	<DropdownMenu.Content align="end">
 		{#if file.type === 'file'}
 			<DropdownMenu.Item onclick={() => onCopyLink(file)}>
-				<Link class="mr-2 size-4" />
+				{#if copiedLink}
+					<Check class="mr-2 size-4 text-green-500" />
+				{:else}
+					<Link class="mr-2 size-4" />
+				{/if}
 				Copy Link
 			</DropdownMenu.Item>
 			<DropdownMenu.Item onclick={() => onCopyContents(file)}>

@@ -134,7 +134,11 @@ export async function createFile(
 
 	// Handle both text and binary content
 	if (typeof content === 'string') {
-		body.content = btoa(content); // Handle UTF-8 text properly
+		// Properly encode UTF-8 strings to base64
+		// btoa() fails with UTF-8 characters, so we need to use TextEncoder
+		const encoder = new TextEncoder();
+		const bytes = encoder.encode(content);
+		body.content = bytesToBase64(bytes);
 	} else {
 		body.content = bytesToBase64(new Uint8Array(content));
 	}

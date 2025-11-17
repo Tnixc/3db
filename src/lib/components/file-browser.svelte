@@ -24,6 +24,7 @@
 	let hoveredRow = $state<number | null>(null);
 	let renameDialogOpen = $state(false);
 	let renameFile = $state<FileContent | null>(null);
+	let copiedLinkPath = $state<string | null>(null);
 
 	let {
 		currentPath = $bindable(''),
@@ -163,17 +164,24 @@
 			const { url } = await response.json();
 			console.log('[CopyLink] Generated masked URL:', url);
 			await navigator.clipboard.writeText(url);
-			alert('Masked link copied to clipboard!');
+
+			// Show tick indicator
+			copiedLinkPath = file.path;
+			setTimeout(() => {
+				copiedLinkPath = null;
+			}, 2000);
 		} catch (err) {
 			console.error('[CopyLink] Error:', err);
 			// Fallback to original URL if API fails
 			if (file.download_url) {
 				console.warn('[CopyLink] Falling back to original GitHub URL');
 				await navigator.clipboard.writeText(file.download_url);
-				alert(
-					'Failed to generate masked link. Copied original GitHub URL instead.\nError: ' +
-						(err instanceof Error ? err.message : String(err))
-				);
+
+				// Show tick indicator even for fallback
+				copiedLinkPath = file.path;
+				setTimeout(() => {
+					copiedLinkPath = null;
+				}, 2000);
 			}
 		}
 	}
@@ -382,7 +390,8 @@
 					onCopyLink: copyLink,
 					onCopyContents: copyContents,
 					onRename: handleRename,
-					onDelete: handleDelete
+					onDelete: handleDelete,
+					copiedLink: copiedLinkPath === file.path
 				});
 			}
 		}
