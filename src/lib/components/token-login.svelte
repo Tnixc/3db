@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { Button } from '$lib/components/ui/button';
-	import Icon from '@iconify/svelte';
+	import Github from 'lucide-svelte/icons/github';
+	import ShieldCheck from 'lucide-svelte/icons/shield-check';
+	import Info from 'lucide-svelte/icons/info';
 	import { authStore } from '$lib/stores/auth';
 </script>
 
@@ -17,14 +19,14 @@
 
 		<div class="space-y-2">
 			<Button class="w-full" onclick={() => authStore.login()}>
-				<Icon icon="lucide:github" class="mr-2 h-4 w-4" />
+				<Github class="mr-2 h-4 w-4" />
 				Continue with GitHub
 			</Button>
 		</div>
 
 		<div class="rounded-lg border border-green-500/20 bg-green-500/10 p-4">
 			<h3 class="mb-2 flex items-center gap-2 font-medium text-green-700 dark:text-green-300">
-				<Icon icon="lucide:shield-check" class="h-4 w-4" />
+				<ShieldCheck class="h-4 w-4" />
 				Secure OAuth Authentication
 			</h3>
 			<ul class="list-inside list-disc space-y-1 text-sm text-green-600 dark:text-green-400">
@@ -36,7 +38,7 @@
 
 		<div class="rounded-lg border border-blue-500/20 bg-blue-500/10 p-4">
 			<h3 class="mb-2 flex items-center gap-2 font-medium text-blue-700 dark:text-blue-300">
-				<Icon icon="lucide:info" class="h-4 w-4" />
+				<Info class="h-4 w-4" />
 				After logging in
 			</h3>
 			<ol class="list-inside list-decimal space-y-1 text-sm text-blue-600 dark:text-blue-400">

@@ -2,7 +2,7 @@
 	import FileBrowser from '$lib/components/file-browser.svelte';
 	import FileUploadDialog from '$lib/components/file-upload-dialog.svelte';
 	import TokenLogin from '$lib/components/token-login.svelte';
-	import Icon from '@iconify/svelte';
+	import Database from 'lucide-svelte/icons/database';
 	import { currentRepository } from '$lib/stores/repositories';
 	import { authStore } from '$lib/stores/auth';
 
@@ -40,7 +40,7 @@
 {:else}
 	<div class="flex min-h-[calc(100vh-8rem)] items-center justify-center">
 		<div class="text-center">
-			<Icon icon="lucide:database" class="mx-auto mb-4 size-16 text-muted-foreground" />
+			<Database class="mx-auto mb-4 size-16 text-muted-foreground" />
 			<h2 class="mb-2 text-2xl font-semibold">No Repository Selected</h2>
 			<p class="text-muted-foreground">
 				Select a repository from the sidebar or create a new one to get started

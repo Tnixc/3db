@@ -8,7 +8,10 @@
 	} from '@tanstack/table-core';
 	import { createSvelteTable, FlexRender } from '$lib/components/ui/data-table/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
-	import Icon from '@iconify/svelte';
+	import ArrowLeft from 'lucide-svelte/icons/arrow-left';
+	import RefreshCw from 'lucide-svelte/icons/refresh-cw';
+	import Upload from 'lucide-svelte/icons/upload';
+	import { Skeleton } from '$lib/components/ui/skeleton';
 	import { createRawSnippet } from 'svelte';
 	import { renderSnippet, renderComponent } from '$lib/components/ui/data-table/index.js';
 	import { currentRepository } from '$lib/stores/repositories';
@@ -16,8 +19,11 @@
 	import FileActionsMenu from './file-actions-menu.svelte';
 	import DataTableSortButton from './data-table-sort-button.svelte';
 	import DataTableNameCell from './data-table-name-cell.svelte';
+	import RenameDialog from './rename-dialog.svelte';
 
 	let hoveredRow = $state<number | null>(null);
+	let renameDialogOpen = $state(false);
+	let renameFile = $state<FileContent | null>(null);
 
 	let {
 		currentPath = $bindable(''),
@@ -90,7 +96,12 @@
 	async function handleDelete(file: FileContent) {
 		if (!$currentRepository || $authStore.status !== 'ready') return;
 
-		if (!confirm(`Are you sure you want to delete ${file.name}?\n\nWarning: Even after deletion, this file will remain in the repository's commit history and can be recovered. Files uploaded to Git are never truly deleted.`)) return;
+		if (
+			!confirm(
+				`Are you sure you want to delete ${file.name}?\n\nWarning: Even after deletion, this file will remain in the repository's commit history and can be recovered. Files uploaded to Git are never truly deleted.`
+			)
+		)
+			return;
 
 		try {
 			// Use server API to delete file/folder (accesses httpOnly cookie)
@@ -181,73 +192,69 @@
 	}
 
 	async function handleRename(file: FileContent) {
-		const newName = prompt(`Rename ${file.type === 'dir' ? 'folder' : 'file'}:`, file.name);
-		if (!newName || newName === file.name) return;
+		renameFile = file;
+		renameDialogOpen = true;
+	}
 
+	async function performRename(file: FileContent, newName: string) {
 		if (!$currentRepository || $authStore.status !== 'ready') return;
 
-		try {
-			const pathParts = file.path.split('/');
-			pathParts[pathParts.length - 1] = newName;
-			const newPath = pathParts.join('/');
+		const pathParts = file.path.split('/');
+		pathParts[pathParts.length - 1] = newName;
+		const newPath = pathParts.join('/');
 
-			if (file.type === 'file') {
-				// For files: download content, create new file, delete old file
-				const contentResponse = await fetch(file.download_url);
-				const content = await contentResponse.text();
+		if (file.type === 'file') {
+			// For files: download content, create new file, delete old file
+			const contentResponse = await fetch(file.download_url);
+			const content = await contentResponse.text();
 
-				// Create new file using server API
-				const createResponse = await fetch(
-					`/api/repos/${$currentRepository.owner.login}/${$currentRepository.name}/contents`,
-					{
-						method: 'PUT',
-						headers: {
-							'Content-Type': 'application/json'
-						},
-						body: JSON.stringify({
-							path: newPath,
-							content,
-							message: `Rename ${file.name} to ${newName}`
-						}),
-						credentials: 'same-origin'
-					}
-				);
-
-				if (!createResponse.ok) {
-					throw new Error(`Failed to create renamed file: ${createResponse.statusText}`);
+			// Create new file using server API
+			const createResponse = await fetch(
+				`/api/repos/${$currentRepository.owner.login}/${$currentRepository.name}/contents`,
+				{
+					method: 'PUT',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({
+						path: newPath,
+						content,
+						message: `Rename ${file.name} to ${newName}`
+					}),
+					credentials: 'same-origin'
 				}
+			);
 
-				// Delete old file using server API
-				const deleteResponse = await fetch(
-					`/api/repos/${$currentRepository.owner.login}/${$currentRepository.name}/contents`,
-					{
-						method: 'DELETE',
-						headers: {
-							'Content-Type': 'application/json'
-						},
-						body: JSON.stringify({
-							path: file.path,
-							sha: file.sha,
-							isFolder: false
-						}),
-						credentials: 'same-origin'
-					}
-				);
-
-				if (!deleteResponse.ok) {
-					throw new Error(`Failed to delete old file: ${deleteResponse.statusText}`);
-				}
-			} else {
-				// For folders: need to recursively move all contents
-				alert('Folder renaming is not yet supported. Please use GitHub web interface.');
-				return;
+			if (!createResponse.ok) {
+				throw new Error(`Failed to create renamed file: ${createResponse.statusText}`);
 			}
 
-			await loadFiles();
-		} catch (err) {
-			console.error('Failed to rename:', err);
-			alert('Failed to rename item');
+			// Delete old file using server API
+			const deleteResponse = await fetch(
+				`/api/repos/${$currentRepository.owner.login}/${$currentRepository.name}/contents`,
+				{
+					method: 'DELETE',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({
+						path: file.path,
+						sha: file.sha,
+						isFolder: false
+					}),
+					credentials: 'same-origin'
+				}
+			);
+
+			if (!deleteResponse.ok) {
+				throw new Error(`Failed to delete old file: ${deleteResponse.statusText}`);
+			}
+		} else {
+			// For folders: need to recursively move all contents
+			throw new Error('Folder renaming is not yet supported. Please use GitHub web interface.');
 		}
+
+		await loadFiles();
 	}
 
 	function formatBytes(bytes: number): string {
@@ -303,7 +310,8 @@
 				const typeSnippet = createRawSnippet<[{ type: string }]>((getType) => {
 					const { type } = getType();
 					return {
-						render: () => `<div class="text-muted-foreground capitalize">${type === 'dir' ? 'Folder' : 'File'}</div>`
+						render: () =>
+							`<div class="text-muted-foreground capitalize">${type === 'dir' ? 'Folder' : 'File'}</div>`
 					};
 				});
 				return renderSnippet(typeSnippet, { type: row.original.type });
@@ -354,8 +362,12 @@
 				});
 			},
 			sortingFn: (rowA, rowB) => {
-				const dateA = rowA.original.last_modified ? new Date(rowA.original.last_modified).getTime() : 0;
-				const dateB = rowB.original.last_modified ? new Date(rowB.original.last_modified).getTime() : 0;
+				const dateA = rowA.original.last_modified
+					? new Date(rowA.original.last_modified).getTime()
+					: 0;
+				const dateB = rowB.original.last_modified
+					? new Date(rowB.original.last_modified).getTime()
+					: 0;
 				return dateA - dateB;
 			}
 		},
@@ -405,20 +417,20 @@
 		<div class="flex items-center gap-2">
 			{#if currentPath}
 				<Button variant="ghost" size="sm" onclick={goUp}>
-					<Icon icon="lucide:arrow-left" class="mr-2 size-4 shrink-0" />
+					<ArrowLeft class="mr-2 size-4 shrink-0" />
 					Back
 				</Button>
-				<span class="text-sm text-muted-foreground">/{currentPath}</span>
+				<span class="text-muted-foreground text-sm">/{currentPath}</span>
 			{/if}
 		</div>
 		<div class="flex items-center gap-2">
 			<Button variant="ghost" size="sm" onclick={loadFiles} disabled={loading}>
-				<Icon icon="lucide:refresh-cw" class="mr-2 size-4 shrink-0 {loading ? 'animate-spin' : ''}" />
+				<RefreshCw class="mr-2 size-4 shrink-0 {loading ? 'animate-spin' : ''}" />
 				Refresh
 			</Button>
 			{#if onUpload}
 				<Button size="sm" onclick={onUpload}>
-					<Icon icon="lucide:upload" class="mr-2 size-4 shrink-0" />
+					<Upload class="mr-2 size-4 shrink-0" />
 					Upload Files
 				</Button>
 			{/if}
@@ -426,29 +438,34 @@
 	</div>
 
 	{#if loading}
-		<div class="flex h-64 items-center justify-center">
-			<Icon icon="lucide:loader-2" class="size-8 animate-spin text-primary" />
+		<div class="space-y-2">
+			<Skeleton class="h-12 w-full" />
+			<Skeleton class="h-12 w-full" />
+			<Skeleton class="h-12 w-full" />
+			<Skeleton class="h-12 w-full" />
+			<Skeleton class="h-12 w-full" />
 		</div>
 	{:else if error}
 		<div class="flex h-64 items-center justify-center">
 			<p class="text-destructive">{error}</p>
 		</div>
 	{:else}
-		<div class="rounded-md border overflow-x-auto">
-			<div class="w-full min-w-[640px] grid grid-cols-[1fr_auto_auto_auto_auto]">
+		<div class="overflow-x-auto rounded-md border">
+			<div class="grid w-full min-w-[640px] grid-cols-[1fr_auto_auto_auto_auto]">
 				<!-- Header -->
 				{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
 					{#each headerGroup.headers as header (header.id)}
 						<div
-							class="text-muted-foreground h-12 px-4 text-left align-middle text-sm font-medium flex items-center border-b bg-muted/50 {header.column.id === 'actions' ? 'justify-end' : ''}"
+							class="text-muted-foreground bg-muted/50 flex h-12 items-center border-b px-4 text-left align-middle text-sm font-medium {header
+								.column.id === 'actions'
+								? 'justify-end'
+								: ''}"
 						>
 							{#if !header.isPlaceholder}
-								<div class="translate-x-4">
-									<FlexRender
-										content={header.column.columnDef.header}
-										context={header.getContext()}
-									/>
-								</div>
+								<FlexRender
+									content={header.column.columnDef.header}
+									context={header.getContext()}
+								/>
 							{/if}
 						</div>
 					{/each}
@@ -456,7 +473,9 @@
 
 				<!-- Body -->
 				{#if table.getRowModel().rows.length === 0}
-					<div class="col-span-5 flex h-24 items-center justify-center text-sm text-muted-foreground">
+					<div
+						class="text-muted-foreground col-span-5 flex h-24 items-center justify-center text-sm"
+					>
 						This folder is empty
 					</div>
 				{:else}
@@ -464,15 +483,18 @@
 						{#each row.getVisibleCells() as cell, cellIdx (cell.id)}
 							<!-- svelte-ignore a11y_no_static_element_interactions -->
 							<div
-								class="p-4 align-middle text-sm flex items-center border-b transition-colors {cell.column.id === 'actions' ? 'justify-end' : ''} {cellIdx === 0 ? 'col-start-1' : ''} {hoveredRow === rowIdx && !row.getIsSelected() ? 'bg-muted/50' : ''}"
+								class="flex items-center border-b p-2 align-middle text-sm transition-colors {cell
+									.column.id === 'actions'
+									? 'justify-end'
+									: ''} {cellIdx === 0 ? 'col-start-1' : ''} {hoveredRow === rowIdx &&
+								!row.getIsSelected()
+									? 'bg-muted/50'
+									: ''}"
 								class:bg-muted={row.getIsSelected()}
 								onmouseenter={() => (hoveredRow = rowIdx)}
 								onmouseleave={() => (hoveredRow = null)}
 							>
-								<FlexRender
-									content={cell.column.columnDef.cell}
-									context={cell.getContext()}
-								/>
+								<FlexRender content={cell.column.columnDef.cell} context={cell.getContext()} />
 							</div>
 						{/each}
 					{/each}
@@ -481,3 +503,6 @@
 		</div>
 	{/if}
 </div>
+
+<!-- Dialogs -->
+<RenameDialog bind:open={renameDialogOpen} bind:file={renameFile} onRename={performRename} />

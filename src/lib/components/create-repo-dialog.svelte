@@ -3,7 +3,8 @@
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
-	import Icon from '@iconify/svelte';
+	import LoaderCircle from 'lucide-svelte/icons/loader-circle';
+	import Plus from 'lucide-svelte/icons/plus';
 	import { authStore } from '$lib/stores/auth';
 	import { repositories } from '$lib/stores/repositories';
 	import { validateRepositoryName } from '$lib/utils/security';
@@ -105,10 +106,10 @@
 			<Button variant="outline" onclick={() => (open = false)} disabled={loading}>Cancel</Button>
 			<Button onclick={handleCreate} disabled={loading || !repoName.trim()}>
 				{#if loading}
-					<Icon icon="lucide:loader-2" class="mr-2 size-4 animate-spin" />
+					<LoaderCircle class="mr-2 size-4 animate-spin" />
 					Creating...
 				{:else}
-					<Icon icon="lucide:plus" class="mr-2 size-4" />
+					<Plus class="mr-2 size-4" />
 					Create Repository
 				{/if}
 			</Button>
