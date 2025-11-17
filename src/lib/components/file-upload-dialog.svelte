@@ -20,7 +20,7 @@
 	}: {
 		open?: boolean;
 		currentPath?: string;
-		onUploadComplete?: () => void;
+		onUploadComplete?: (() => void) | (() => Promise<void>);
 	} = $props();
 
 	let files = $state<FileList | null>(null);

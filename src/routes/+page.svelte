@@ -8,18 +8,14 @@
 
 	let currentPath = $state('');
 	let uploadDialogOpen = $state(false);
+	let reloadFiles = $state<(() => Promise<void>) | undefined>(undefined);
 
 	function handleNavigate(path: string) {
 		currentPath = path;
 	}
 
-	function handleUploadComplete() {
-		// Trigger re-render of file browser by updating the path
-		const temp = currentPath;
-		currentPath = '';
-		setTimeout(() => {
-			currentPath = temp;
-		}, 100);
+	function handleBrowserMount(reload: () => Promise<void>) {
+		reloadFiles = reload;
 	}
 </script>
 
@@ -30,12 +26,13 @@
 		bind:currentPath
 		onNavigate={handleNavigate}
 		onUpload={() => (uploadDialogOpen = true)}
+		onMount={handleBrowserMount}
 	/>
 
 	<FileUploadDialog
 		bind:open={uploadDialogOpen}
 		{currentPath}
-		onUploadComplete={handleUploadComplete}
+		onUploadComplete={reloadFiles}
 	/>
 {:else}
 	<div class="flex min-h-[calc(100vh-8rem)] items-center justify-center">

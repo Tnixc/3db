@@ -20,20 +20,25 @@
 	import DataTableSortButton from './data-table-sort-button.svelte';
 	import DataTableNameCell from './data-table-name-cell.svelte';
 	import RenameDialog from './rename-dialog.svelte';
+	import DeleteConfirmationDialog from './delete-confirmation-dialog.svelte';
 
 	let hoveredRow = $state<number | null>(null);
 	let renameDialogOpen = $state(false);
 	let renameFile = $state<FileContent | null>(null);
+	let deleteDialogOpen = $state(false);
+	let deleteFile = $state<FileContent | null>(null);
 	let copiedLinkPath = $state<string | null>(null);
 
 	let {
 		currentPath = $bindable(''),
 		onNavigate,
-		onUpload
+		onUpload,
+		onMount
 	}: {
 		currentPath?: string;
 		onNavigate?: (path: string) => void;
 		onUpload?: () => void;
+		onMount?: (reload: () => Promise<void>) => void;
 	} = $props();
 
 	let files = $state<FileContent[]>([]);
@@ -83,6 +88,11 @@
 		}
 	});
 
+	// Expose loadFiles to parent component
+	$effect(() => {
+		onMount?.(loadFiles);
+	});
+
 	function navigateTo(path: string) {
 		currentPath = path;
 		onNavigate?.(path);
@@ -95,14 +105,12 @@
 	}
 
 	async function handleDelete(file: FileContent) {
-		if (!$currentRepository || $authStore.status !== 'ready') return;
+		deleteFile = file;
+		deleteDialogOpen = true;
+	}
 
-		if (
-			!confirm(
-				`Are you sure you want to delete ${file.name}?\n\nWarning: Even after deletion, this file will remain in the repository's commit history and can be recovered. Files uploaded to Git are never truly deleted.`
-			)
-		)
-			return;
+	async function performDelete(file: FileContent) {
+		if (!$currentRepository || $authStore.status !== 'ready') return;
 
 		try {
 			// Use server API to delete file/folder (accesses httpOnly cookie)
@@ -129,7 +137,7 @@
 			await loadFiles();
 		} catch (err) {
 			console.error('Failed to delete:', err);
-			alert('Failed to delete file/folder');
+			throw new Error('Failed to delete file/folder');
 		}
 	}
 
@@ -515,3 +523,4 @@
 
 <!-- Dialogs -->
 <RenameDialog bind:open={renameDialogOpen} bind:file={renameFile} onRename={performRename} />
+<DeleteConfirmationDialog bind:open={deleteDialogOpen} bind:file={deleteFile} onDelete={performDelete} />
