@@ -43,7 +43,7 @@
 						</Sidebar.MenuItem>
 					{:else}
 						<div class="px-2 py-4 text-center text-sm text-muted-foreground">
-							No repositories yet
+							Loading...
 						</div>
 					{/each}
 				</Sidebar.Menu>
