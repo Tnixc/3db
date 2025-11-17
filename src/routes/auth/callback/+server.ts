@@ -45,6 +45,26 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 		// Log the scopes we received (helps with debugging permission issues)
 		console.log('[Auth] Received token with scopes:', tokenData.scope);
 
+		// Validate that we received the required scopes
+		const receivedScopes = tokenData.scope || '';
+		const requiredScopes = ['repo'];
+		const hasRequiredScopes = requiredScopes.every((scope) =>
+			receivedScopes.split(',').includes(scope)
+		);
+
+		if (!hasRequiredScopes) {
+			console.error(
+				'OAuth app did not grant required scopes. Received:',
+				receivedScopes,
+				'Required:',
+				requiredScopes.join(', ')
+			);
+			throw redirect(
+				302,
+				'/?error=insufficient_scopes&received=' + encodeURIComponent(receivedScopes)
+			);
+		}
+
 		// Verify token and get user info
 		const userResponse = await fetch('https://api.github.com/user', {
 			headers: {

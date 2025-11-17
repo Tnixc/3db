@@ -3,7 +3,26 @@
 	import Github from 'lucide-svelte/icons/github';
 	import ShieldCheck from 'lucide-svelte/icons/shield-check';
 	import Info from 'lucide-svelte/icons/info';
+	import AlertCircle from 'lucide-svelte/icons/alert-circle';
 	import { authStore } from '$lib/stores/auth';
+	import { browser } from '$app/environment';
+
+	// Check for OAuth errors in URL params
+	let oauthError = $state<string | null>(null);
+	let receivedScopes = $state<string>('');
+
+	if (browser) {
+		const params = new URLSearchParams(window.location.search);
+		const error = params.get('error');
+		receivedScopes = params.get('received') || '';
+
+		if (error === 'insufficient_scopes') {
+			oauthError =
+				'OAuth Configuration Error: Your GitHub OAuth app is not granting the required permissions. Please check your OAuth app settings.';
+		} else if (error) {
+			oauthError = `Authentication failed: ${error}`;
+		}
+	}
 </script>
 
 <div class="p-8">
@@ -16,6 +35,39 @@
 				Use GitHub OAuth to securely authenticate and access your repositories.
 			</p>
 		</div>
+
+		{#if oauthError}
+			<div class="rounded-lg border border-destructive bg-destructive/10 p-4">
+				<h3 class="mb-2 flex items-center gap-2 font-medium text-destructive">
+					<AlertCircle class="h-4 w-4" />
+					Configuration Error
+				</h3>
+				<p class="mb-3 text-sm text-destructive">
+					{oauthError}
+				</p>
+				{#if receivedScopes !== undefined}
+					<p class="mb-3 text-xs text-destructive/80">
+						Received scopes: {receivedScopes || '(none)'} | Required: repo
+					</p>
+				{/if}
+				<div class="text-sm text-destructive/90">
+					<p class="mb-2 font-medium">To fix this:</p>
+					<ol class="ml-4 list-decimal space-y-1 text-xs">
+						<li>Go to GitHub Settings → Developer Settings → OAuth Apps</li>
+						<li>Make sure you created an <strong>OAuth App</strong> (not a GitHub App)</li>
+						<li>Click on your 3db OAuth app</li>
+						<li>
+							Verify the callback URL matches your deployment URL: <code
+								class="rounded bg-destructive/20 px-1">{browser ? window.location.origin : ''}/auth/callback</code
+							>
+						</li>
+						<li>If issues persist, try creating a new OAuth App</li>
+						<li>Update your .env file with the new Client ID and Secret</li>
+						<li>Redeploy your application</li>
+					</ol>
+				</div>
+			</div>
+		{/if}
 
 		<div class="space-y-2">
 			<Button class="w-full" onclick={() => authStore.login()}>
