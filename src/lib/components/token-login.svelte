@@ -120,6 +120,17 @@
 			</p>
 		</div>
 
+		<div class="rounded-lg border border-orange-500/20 bg-orange-500/10 p-4">
+			<h3 class="mb-2 flex items-center gap-2 font-medium text-orange-700 dark:text-orange-300">
+				<Icon icon="lucide:shield-alert" class="h-4 w-4" />
+				Security Notice
+			</h3>
+			<p class="text-sm text-orange-600 dark:text-orange-400">
+				Your token is stored in browser localStorage, which is vulnerable to XSS attacks and
+				browser extensions. Only use this app on trusted devices. Tokens expire after 30 days.
+			</p>
+		</div>
+
 		<div class="rounded-lg bg-destructive/10 p-4">
 			<h3 class="mb-2 font-medium text-destructive">Warning</h3>
 			<p class="text-sm text-destructive">
