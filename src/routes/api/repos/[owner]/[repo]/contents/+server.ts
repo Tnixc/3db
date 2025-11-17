@@ -3,7 +3,7 @@ import type { RequestHandler } from './$types';
 import * as github from '$lib/services/github';
 import type { GitHubConfig } from '$lib/services/github';
 
-// GET contents
+// GET contents with optional commit dates
 export const GET: RequestHandler = async ({ cookies, params, url }) => {
 	const token = cookies.get('github_token');
 	const userStr = cookies.get('github_user');
@@ -14,11 +14,37 @@ export const GET: RequestHandler = async ({ cookies, params, url }) => {
 
 	const { owner, repo } = params;
 	const path = url.searchParams.get('path') || '';
+	const includeCommits = url.searchParams.get('includeCommits') === 'true';
 
 	try {
 		const user = JSON.parse(userStr);
 		const config: GitHubConfig = { token, userEmail: user.email };
 		const contents = await github.getContents(config, owner, repo, path);
+
+		// If includeCommits is true, fetch last modified dates
+		if (includeCommits) {
+			const contentsArray = Array.isArray(contents) ? contents : [contents];
+
+			const contentsWithDates = await Promise.all(
+				contentsArray.map(async (item) => {
+					try {
+						const commits = await github.getCommits(config, owner, repo, item.path, 1);
+						if (commits && commits.length > 0) {
+							return {
+								...item,
+								last_modified: commits[0].commit.committer.date
+							};
+						}
+					} catch (err) {
+						console.warn(`Failed to fetch commit date for ${item.path}:`, err);
+					}
+					return item;
+				})
+			);
+
+			return json(Array.isArray(contents) ? contentsWithDates : contentsWithDates[0]);
+		}
+
 		return json(contents);
 	} catch (err) {
 		console.error('Error fetching contents:', err);

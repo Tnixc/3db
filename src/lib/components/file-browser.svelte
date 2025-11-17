@@ -44,9 +44,9 @@
 		error = null;
 
 		try {
-			// Use server API to get contents (accesses httpOnly cookie)
+			// Use server API to get contents with commit dates (accesses httpOnly cookie)
 			const response = await fetch(
-				`/api/repos/${$currentRepository.owner.login}/${$currentRepository.name}/contents?path=${encodeURIComponent(currentPath)}`,
+				`/api/repos/${$currentRepository.owner.login}/${$currentRepository.name}/contents?path=${encodeURIComponent(currentPath)}&includeCommits=true`,
 				{
 					credentials: 'same-origin'
 				}
@@ -59,36 +59,7 @@
 			const contents = await response.json();
 
 			// Normalize to array (GitHub returns object for single file, array for directory)
-			const contentsArray = Array.isArray(contents) ? contents : [contents];
-
-			// Fetch last modified dates (still needs to be done client-side for now)
-			const contentsWithDates = await Promise.all(
-				contentsArray.map(async (item) => {
-					try {
-						const commitsResponse = await fetch(
-							`https://api.github.com/repos/${$currentRepository.owner.login}/${$currentRepository.name}/commits?path=${encodeURIComponent(item.path)}&page=1&per_page=1&_=${Date.now()}`,
-							{
-								credentials: 'same-origin',
-								cache: 'no-store'
-							}
-						);
-						if (commitsResponse.ok) {
-							const commits = await commitsResponse.json();
-							if (commits && commits.length > 0) {
-								return {
-									...item,
-									last_modified: commits[0].commit.committer.date
-								};
-							}
-						}
-					} catch (err) {
-						console.warn(`Failed to fetch commit date for ${item.path}:`, err);
-					}
-					return item;
-				})
-			);
-
-			files = contentsWithDates;
+			files = Array.isArray(contents) ? contents : [contents];
 		} catch (err) {
 			console.error('Failed to load files:', err);
 			error = 'Failed to load files';
@@ -150,9 +121,49 @@
 		}
 	}
 
-	function copyLink(file: FileContent) {
-		if (file.download_url) {
-			navigator.clipboard.writeText(file.download_url);
+	async function copyLink(file: FileContent) {
+		if (!$currentRepository || $authStore.status !== 'ready') return;
+
+		try {
+			console.log('[CopyLink] Generating masked URL for:', file.path);
+
+			// Generate a masked URL through our API
+			const response = await fetch('/api/file-link', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					owner: $currentRepository.owner.login,
+					repo: $currentRepository.name,
+					path: file.path,
+					sha: file.sha,
+					download_url: file.download_url
+				}),
+				credentials: 'same-origin'
+			});
+
+			if (!response.ok) {
+				const errorData = await response.text();
+				console.error('[CopyLink] API error:', response.status, errorData);
+				throw new Error(`Failed to generate link: ${response.status} ${errorData}`);
+			}
+
+			const { url } = await response.json();
+			console.log('[CopyLink] Generated masked URL:', url);
+			await navigator.clipboard.writeText(url);
+			alert('Masked link copied to clipboard!');
+		} catch (err) {
+			console.error('[CopyLink] Error:', err);
+			// Fallback to original URL if API fails
+			if (file.download_url) {
+				console.warn('[CopyLink] Falling back to original GitHub URL');
+				await navigator.clipboard.writeText(file.download_url);
+				alert(
+					'Failed to generate masked link. Copied original GitHub URL instead.\nError: ' +
+						(err instanceof Error ? err.message : String(err))
+				);
+			}
 		}
 	}
 
