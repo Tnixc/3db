@@ -48,30 +48,6 @@
 
 {#if $authStore.status === 'logged_out' || $authStore.status === 'logging_in'}
 	{@render children()}
-{:else if $authStore.status === 'logged_in' || $authStore.status === 'initializing'}
-	<div class="flex h-screen items-center justify-center">
-		<div class="w-full max-w-md space-y-6 px-4">
-			<div class="text-center">
-				<h2 class="mb-2 text-xl font-semibold">Setting up your workspace</h2>
-				<p class="text-muted-foreground text-sm">
-					{#if $authStore.status === 'logged_in'}
-						Starting initialization...
-					{:else}
-						Creating service repository and loading data...
-					{/if}
-				</p>
-				<p class="mt-2 text-sm text-muted-foreground">This may take 15-30 seconds</p>
-			</div>
-			<div class="space-y-4">
-				<Skeleton class="h-24 w-full" />
-				<div class="space-y-2">
-					<Skeleton class="h-12 w-full" />
-					<Skeleton class="h-12 w-full" />
-					<Skeleton class="h-12 w-full" />
-				</div>
-			</div>
-		</div>
-	</div>
 {:else if $authStore.status === 'error'}
 	<div class="flex h-screen items-center justify-center">
 		<div class="max-w-md text-center">
@@ -82,7 +58,7 @@
 			<Button variant="ghost" class="ml-2" onclick={handleSignOut}>Logout</Button>
 		</div>
 	</div>
-{:else if $authStore.status === 'ready'}
+{:else}
 	<Sidebar.Provider>
 		<AppSidebar onCreateRepo={handleCreateRepo} onSignOut={handleSignOut} />
 		<Sidebar.Inset>
@@ -111,7 +87,20 @@
 
 			<!-- Page Content -->
 			<main class="flex-1 overflow-auto p-6">
-				{@render children()}
+				{#if $authStore.status === 'logged_in' || $authStore.status === 'initializing'}
+					<div class="space-y-4">
+						<Skeleton class="h-32 w-full" />
+						<div class="space-y-2">
+							<Skeleton class="h-12 w-full" />
+							<Skeleton class="h-12 w-full" />
+							<Skeleton class="h-12 w-full" />
+							<Skeleton class="h-12 w-full" />
+							<Skeleton class="h-12 w-full" />
+						</div>
+					</div>
+				{:else}
+					{@render children()}
+				{/if}
 			</main>
 		</Sidebar.Inset>
 	</Sidebar.Provider>
