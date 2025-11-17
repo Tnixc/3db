@@ -18,6 +18,8 @@
 	import DataTableSortButton from './data-table-sort-button.svelte';
 	import DataTableNameCell from './data-table-name-cell.svelte';
 
+	let hoveredRow = $state<number | null>(null);
+
 	let {
 		currentPath = $bindable(''),
 		onNavigate,
@@ -393,47 +395,43 @@
 		</div>
 	{:else}
 		<div class="rounded-md border overflow-x-auto">
-			<div class="w-full min-w-[640px]">
+			<div class="w-full min-w-[640px] grid grid-cols-[1fr_auto_auto_auto_auto]">
 				<!-- Header -->
 				{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
-					<div class="grid grid-cols-[1fr_auto_auto_auto_auto] border-b bg-muted/50">
-						{#each headerGroup.headers as header (header.id)}
-							<div
-								class="text-muted-foreground h-12 px-4 text-left align-middle text-sm font-medium flex items-center {header.column.id === 'actions' ? 'justify-end' : ''}"
-							>
-								{#if !header.isPlaceholder}
-									<FlexRender
-										content={header.column.columnDef.header}
-										context={header.getContext()}
-									/>
-								{/if}
-							</div>
-						{/each}
-					</div>
+					{#each headerGroup.headers as header (header.id)}
+						<div
+							class="text-muted-foreground h-12 px-4 text-left align-middle text-sm font-medium flex items-center border-b bg-muted/50 {header.column.id === 'actions' ? 'justify-end' : ''}"
+						>
+							{#if !header.isPlaceholder}
+								<FlexRender
+									content={header.column.columnDef.header}
+									context={header.getContext()}
+								/>
+							{/if}
+						</div>
+					{/each}
 				{/each}
 
 				<!-- Body -->
 				{#if table.getRowModel().rows.length === 0}
-					<div class="flex h-24 items-center justify-center text-sm text-muted-foreground">
+					<div class="col-span-5 flex h-24 items-center justify-center text-sm text-muted-foreground">
 						This folder is empty
 					</div>
 				{:else}
-					{#each table.getRowModel().rows as row (row.id)}
-						<div
-							class="grid grid-cols-[1fr_auto_auto_auto_auto] border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
-							data-state={row.getIsSelected() ? 'selected' : undefined}
-						>
-							{#each row.getVisibleCells() as cell (cell.id)}
-								<div
-									class="p-4 align-middle text-sm flex items-center {cell.column.id === 'actions' ? 'justify-end' : ''}"
-								>
-									<FlexRender
-										content={cell.column.columnDef.cell}
-										context={cell.getContext()}
-									/>
-								</div>
-							{/each}
-						</div>
+					{#each table.getRowModel().rows as row, rowIdx (row.id)}
+						{#each row.getVisibleCells() as cell, cellIdx (cell.id)}
+							<div
+								class="p-4 align-middle text-sm flex items-center border-b transition-colors {cell.column.id === 'actions' ? 'justify-end' : ''} {cellIdx === 0 ? 'col-start-1' : ''} {hoveredRow === rowIdx && !row.getIsSelected() ? 'bg-muted/50' : ''}"
+								class:bg-muted={row.getIsSelected()}
+								onmouseenter={() => (hoveredRow = rowIdx)}
+								onmouseleave={() => (hoveredRow = null)}
+							>
+								<FlexRender
+									content={cell.column.columnDef.cell}
+									context={cell.getContext()}
+								/>
+							</div>
+						{/each}
 					{/each}
 				{/if}
 			</div>
