@@ -211,3 +211,16 @@ export async function deleteFolder(
 		}
 	}
 }
+
+export async function getCommits(
+	config: GitHubConfig,
+	owner: string,
+	repo: string,
+	path: string,
+	perPage: number = 1
+): Promise<any[]> {
+	return request(
+		config,
+		`/repos/${owner}/${repo}/commits?path=${encodeURIComponent(path)}&per_page=${perPage}`
+	);
+}
