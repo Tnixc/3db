@@ -37,7 +37,7 @@
 								<Database class="size-4" />
 								<span class="truncate">{repo.name}</span>
 							</Sidebar.MenuButton>
-							<Sidebar.MenuAction>
+							<Sidebar.MenuAction showOnHover>
 								<RepoContextMenu {repo} />
 							</Sidebar.MenuAction>
 						</Sidebar.MenuItem>
