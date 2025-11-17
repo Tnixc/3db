@@ -7,7 +7,6 @@
 		getSortedRowModel
 	} from '@tanstack/table-core';
 	import { createSvelteTable, FlexRender } from '$lib/components/ui/data-table/index.js';
-	import * as Table from '$lib/components/ui/table/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import Icon from '@iconify/svelte';
 	import { createRawSnippet } from 'svelte';
@@ -18,6 +17,8 @@
 	import FileActionsMenu from './file-actions-menu.svelte';
 	import DataTableSortButton from './data-table-sort-button.svelte';
 	import DataTableNameCell from './data-table-name-cell.svelte';
+
+	let hoveredRow = $state<number | null>(null);
 
 	let {
 		currentPath = $bindable(''),
@@ -248,8 +249,7 @@
 					file: row.original,
 					onNavigate: navigateTo
 				});
-			},
-			size: 9999
+			}
 		},
 		{
 			accessorKey: 'type',
@@ -267,8 +267,7 @@
 					};
 				});
 				return renderSnippet(typeSnippet, { type: row.original.type });
-			},
-			size: 100
+			}
 		},
 		{
 			accessorKey: 'size',
@@ -293,8 +292,7 @@
 				const sizeA = rowA.original.type === 'dir' ? -1 : rowA.original.size;
 				const sizeB = rowB.original.type === 'dir' ? -1 : rowB.original.size;
 				return sizeA - sizeB;
-			},
-			size: 100
+			}
 		},
 		{
 			accessorKey: 'last_modified',
@@ -319,8 +317,7 @@
 				const dateA = rowA.original.last_modified ? new Date(rowA.original.last_modified).getTime() : 0;
 				const dateB = rowB.original.last_modified ? new Date(rowB.original.last_modified).getTime() : 0;
 				return dateA - dateB;
-			},
-			size: 150
+			}
 		},
 		{
 			id: 'actions',
@@ -335,8 +332,7 @@
 					onRename: handleRename,
 					onDelete: handleDelete
 				});
-			},
-			size: 50
+			}
 		}
 	];
 
@@ -398,45 +394,47 @@
 			<p class="text-destructive">{error}</p>
 		</div>
 	{:else}
-		<div class="rounded-md border">
-			<Table.Root>
-				<Table.Header>
-					{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
-						<Table.Row class="p-4">
-							{#each headerGroup.headers as header (header.id)}
-								<Table.Head colspan={header.colSpan} class="translate-x-4">
-									{#if !header.isPlaceholder}
-										<FlexRender
-											content={header.column.columnDef.header}
-											context={header.getContext()}
-										/>
-									{/if}
-								</Table.Head>
-							{/each}
-						</Table.Row>
+		<div class="rounded-md border overflow-x-auto">
+			<div class="w-full min-w-[640px] grid grid-cols-[1fr_auto_auto_auto_auto]">
+				<!-- Header -->
+				{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
+					{#each headerGroup.headers as header (header.id)}
+						<div
+							class="text-muted-foreground h-12 px-4 text-left align-middle text-sm font-medium flex items-center border-b bg-muted/50 translate-x-4 {header.column.id === 'actions' ? 'justify-end' : ''}"
+						>
+							{#if !header.isPlaceholder}
+								<FlexRender
+									content={header.column.columnDef.header}
+									context={header.getContext()}
+								/>
+							{/if}
+						</div>
 					{/each}
-				</Table.Header>
-				<Table.Body>
-					{#each table.getRowModel().rows as row (row.id)}
-						<Table.Row data-state={row.getIsSelected() && 'selected'}>
-							{#each row.getVisibleCells() as cell (cell.id)}
-								<Table.Cell>
-									<FlexRender
-										content={cell.column.columnDef.cell}
-										context={cell.getContext()}
-									/>
-								</Table.Cell>
-							{/each}
-						</Table.Row>
-					{:else}
-						<Table.Row>
-							<Table.Cell colspan={columns.length} class="h-24 text-center">
-								This folder is empty
-							</Table.Cell>
-						</Table.Row>
+				{/each}
+
+				<!-- Body -->
+				{#if table.getRowModel().rows.length === 0}
+					<div class="col-span-5 flex h-24 items-center justify-center text-sm text-muted-foreground">
+						This folder is empty
+					</div>
+				{:else}
+					{#each table.getRowModel().rows as row, rowIdx (row.id)}
+						{#each row.getVisibleCells() as cell, cellIdx (cell.id)}
+							<div
+								class="p-4 align-middle text-sm flex items-center border-b transition-colors {cell.column.id === 'actions' ? 'justify-end' : ''} {cellIdx === 0 ? 'col-start-1' : ''} {hoveredRow === rowIdx && !row.getIsSelected() ? 'bg-muted/50' : ''}"
+								class:bg-muted={row.getIsSelected()}
+								onmouseenter={() => (hoveredRow = rowIdx)}
+								onmouseleave={() => (hoveredRow = null)}
+							>
+								<FlexRender
+									content={cell.column.columnDef.cell}
+									context={cell.getContext()}
+								/>
+							</div>
+						{/each}
 					{/each}
-				</Table.Body>
-			</Table.Root>
+				{/if}
+			</div>
 		</div>
 	{/if}
 </div>
