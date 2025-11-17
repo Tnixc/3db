@@ -400,7 +400,7 @@
 				{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
 					{#each headerGroup.headers as header (header.id)}
 						<div
-							class="text-muted-foreground h-12 px-4 text-left align-middle text-sm font-medium flex items-center border-b bg-muted/50 {header.column.id === 'actions' ? 'justify-end' : ''}"
+							class="text-muted-foreground h-12 px-4 text-left align-middle text-sm font-medium flex items-center border-b bg-muted/50 translate-x-4 {header.column.id === 'actions' ? 'justify-end' : ''}"
 						>
 							{#if !header.isPlaceholder}
 								<FlexRender
