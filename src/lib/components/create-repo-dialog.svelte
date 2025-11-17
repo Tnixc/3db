@@ -4,7 +4,6 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import Icon from '@iconify/svelte';
-	import { createRepository } from '$lib/services/github';
 	import { authStore } from '$lib/stores/auth';
 	import { repositories } from '$lib/stores/repositories';
 	import { validateRepositoryName } from '$lib/utils/security';
@@ -31,8 +30,21 @@
 		error = null;
 
 		try {
-			const config = { token: $authStore.token, userEmail: $authStore.user.email };
-			const newRepo = await createRepository(config, trimmedName);
+			// Use server API to create repository (accesses httpOnly cookie)
+			const response = await fetch('/api/repos', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({ name: trimmedName }),
+				credentials: 'same-origin'
+			});
+
+			if (!response.ok) {
+				throw new Error(`Failed to create repository: ${response.statusText}`);
+			}
+
+			const newRepo = await response.json();
 
 			// Add to repositories store
 			repositories.update((repos) => [...repos, newRepo]);

@@ -4,7 +4,6 @@
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import Icon from '@iconify/svelte';
-	import { createFile } from '$lib/services/github';
 	import { authStore } from '$lib/stores/auth';
 	import { currentRepository } from '$lib/stores/repositories';
 	import {
@@ -67,7 +66,6 @@
 		error = null;
 
 		try {
-			const config = { token: $authStore.token, userEmail: $authStore.user.email };
 			const fileArray = Array.from(files);
 
 			// Validate all files before uploading
@@ -88,13 +86,25 @@
 				const path = currentPath ? `${currentPath}/${sanitizedName}` : sanitizedName;
 				const content = await file.arrayBuffer();
 
-				await createFile(
-					config,
-					$currentRepository.owner.login,
-					$currentRepository.name,
-					path,
-					content
+				// Use server API to upload file (accesses httpOnly cookie)
+				const response = await fetch(
+					`/api/repos/${$currentRepository.owner.login}/${$currentRepository.name}/contents`,
+					{
+						method: 'PUT',
+						headers: {
+							'Content-Type': 'application/json'
+						},
+						body: JSON.stringify({
+							path,
+							content
+						}),
+						credentials: 'same-origin'
+					}
 				);
+
+				if (!response.ok) {
+					throw new Error(`Failed to upload ${sanitizedName}: ${response.statusText}`);
+				}
 			}
 
 			// Reset and close

@@ -13,7 +13,6 @@
 	import { renderSnippet, renderComponent } from '$lib/components/ui/data-table/index.js';
 	import { currentRepository } from '$lib/stores/repositories';
 	import { authStore } from '$lib/stores/auth';
-	import { getContents, deleteFile, deleteFolder, createFile } from '$lib/services/github';
 	import FileActionsMenu from './file-actions-menu.svelte';
 	import DataTableSortButton from './data-table-sort-button.svelte';
 	import DataTableNameCell from './data-table-name-cell.svelte';
@@ -45,33 +44,36 @@
 		error = null;
 
 		try {
-			const config = { token: $authStore.token, userEmail: $authStore.user.email };
-			const contents = await getContents(
-				config,
-				$currentRepository.owner.login,
-				$currentRepository.name,
-				currentPath
+			// Use server API to get contents (accesses httpOnly cookie)
+			const response = await fetch(
+				`/api/repos/${$currentRepository.owner.login}/${$currentRepository.name}/contents?path=${encodeURIComponent(currentPath)}`,
+				{
+					credentials: 'same-origin'
+				}
 			);
+
+			if (!response.ok) {
+				throw new Error(`Failed to load contents: ${response.statusText}`);
+			}
+
+			const contents = await response.json();
 
 			// Normalize to array (GitHub returns object for single file, array for directory)
 			const contentsArray = Array.isArray(contents) ? contents : [contents];
 
-			// Fetch last modified dates
+			// Fetch last modified dates (still needs to be done client-side for now)
 			const contentsWithDates = await Promise.all(
 				contentsArray.map(async (item) => {
 					try {
-						const response = await fetch(
+						const commitsResponse = await fetch(
 							`https://api.github.com/repos/${$currentRepository.owner.login}/${$currentRepository.name}/commits?path=${encodeURIComponent(item.path)}&page=1&per_page=1&_=${Date.now()}`,
 							{
-								headers: {
-									Authorization: `Bearer ${$authStore.token}`,
-									Accept: 'application/vnd.github.v3+json'
-								},
+								credentials: 'same-origin',
 								cache: 'no-store'
 							}
 						);
-						if (response.ok) {
-							const commits = await response.json();
+						if (commitsResponse.ok) {
+							const commits = await commitsResponse.json();
 							if (commits && commits.length > 0) {
 								return {
 									...item,
@@ -120,23 +122,27 @@
 		if (!confirm(`Are you sure you want to delete ${file.name}?`)) return;
 
 		try {
-			const config = { token: $authStore.token, userEmail: $authStore.user.email };
-			if (file.type === 'dir') {
-				await deleteFolder(
-					config,
-					$currentRepository.owner.login,
-					$currentRepository.name,
-					file.path
-				);
-			} else {
-				await deleteFile(
-					config,
-					$currentRepository.owner.login,
-					$currentRepository.name,
-					file.path,
-					file.sha
-				);
+			// Use server API to delete file/folder (accesses httpOnly cookie)
+			const response = await fetch(
+				`/api/repos/${$currentRepository.owner.login}/${$currentRepository.name}/contents`,
+				{
+					method: 'DELETE',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({
+						path: file.path,
+						sha: file.sha,
+						isFolder: file.type === 'dir'
+					}),
+					credentials: 'same-origin'
+				}
+			);
+
+			if (!response.ok) {
+				throw new Error(`Failed to delete: ${response.statusText}`);
 			}
+
 			await loadFiles();
 		} catch (err) {
 			console.error('Failed to delete:', err);
@@ -170,33 +176,56 @@
 		if (!$currentRepository || $authStore.status !== 'ready') return;
 
 		try {
-			const config = { token: $authStore.token, userEmail: $authStore.user.email };
 			const pathParts = file.path.split('/');
 			pathParts[pathParts.length - 1] = newName;
 			const newPath = pathParts.join('/');
 
 			if (file.type === 'file') {
 				// For files: download content, create new file, delete old file
-				const response = await fetch(file.download_url);
-				const content = await response.text();
+				const contentResponse = await fetch(file.download_url);
+				const content = await contentResponse.text();
 
-				await createFile(
-					config,
-					$currentRepository.owner.login,
-					$currentRepository.name,
-					newPath,
-					content,
-					`Rename ${file.name} to ${newName}`
+				// Create new file using server API
+				const createResponse = await fetch(
+					`/api/repos/${$currentRepository.owner.login}/${$currentRepository.name}/contents`,
+					{
+						method: 'PUT',
+						headers: {
+							'Content-Type': 'application/json'
+						},
+						body: JSON.stringify({
+							path: newPath,
+							content,
+							message: `Rename ${file.name} to ${newName}`
+						}),
+						credentials: 'same-origin'
+					}
 				);
 
-				await deleteFile(
-					config,
-					$currentRepository.owner.login,
-					$currentRepository.name,
-					file.path,
-					file.sha,
-					`Rename ${file.name} to ${newName}`
+				if (!createResponse.ok) {
+					throw new Error(`Failed to create renamed file: ${createResponse.statusText}`);
+				}
+
+				// Delete old file using server API
+				const deleteResponse = await fetch(
+					`/api/repos/${$currentRepository.owner.login}/${$currentRepository.name}/contents`,
+					{
+						method: 'DELETE',
+						headers: {
+							'Content-Type': 'application/json'
+						},
+						body: JSON.stringify({
+							path: file.path,
+							sha: file.sha,
+							isFolder: false
+						}),
+						credentials: 'same-origin'
+					}
 				);
+
+				if (!deleteResponse.ok) {
+					throw new Error(`Failed to delete old file: ${deleteResponse.statusText}`);
+				}
 			} else {
 				// For folders: need to recursively move all contents
 				alert('Folder renaming is not yet supported. Please use GitHub web interface.');
