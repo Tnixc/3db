@@ -1,10 +1,14 @@
 # 3db
 
-A UI for using GitHub repositories as a CDN/file store. Pretty flaky, but works.
+A UI for using GitHub repositories as a CDN/file store. Masks URLs.
 
 
 
-https://github.com/user-attachments/assets/29c5a822-ea87-41ea-94e0-a5555aa45c93
+
+https://github.com/user-attachments/assets/d866a86d-551b-4cad-918e-35fd61471477
+
+
+
 
 
 
@@ -29,10 +33,10 @@ When you first authenticate:
 ## Features
 
 - GitHub OAuth authentication
+- **Encrypted URL masking for file links**
 - Create and connect multiple repositories
 - Upload and delete files
 - Browse files and folders
-- Encrypted URL masking for file links
 - Copy CDN-friendly links
 - Delete files and folders
 
