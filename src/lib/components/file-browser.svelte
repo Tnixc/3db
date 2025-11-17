@@ -150,9 +150,38 @@
 		}
 	}
 
-	function copyLink(file: FileContent) {
-		if (file.download_url) {
-			navigator.clipboard.writeText(file.download_url);
+	async function copyLink(file: FileContent) {
+		if (!$currentRepository || $authStore.status !== 'ready') return;
+
+		try {
+			// Generate a masked URL through our API
+			const response = await fetch('/api/file-link', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					owner: $currentRepository.owner.login,
+					repo: $currentRepository.name,
+					path: file.path,
+					sha: file.sha,
+					download_url: file.download_url
+				}),
+				credentials: 'same-origin'
+			});
+
+			if (!response.ok) {
+				throw new Error('Failed to generate link');
+			}
+
+			const { url } = await response.json();
+			await navigator.clipboard.writeText(url);
+		} catch (err) {
+			console.error('Failed to copy link:', err);
+			// Fallback to original URL if API fails
+			if (file.download_url) {
+				await navigator.clipboard.writeText(file.download_url);
+			}
 		}
 	}
 

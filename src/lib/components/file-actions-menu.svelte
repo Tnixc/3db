@@ -12,7 +12,7 @@
 		onDelete
 	}: {
 		file: FileContent;
-		onCopyLink: (file: FileContent) => void;
+		onCopyLink: (file: FileContent) => Promise<void>;
 		onCopyContents: (file: FileContent) => Promise<void>;
 		onRename: (file: FileContent) => Promise<void>;
 		onDelete: (file: FileContent) => Promise<void>;
