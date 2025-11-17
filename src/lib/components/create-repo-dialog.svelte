@@ -7,6 +7,7 @@
 	import { createRepository } from '$lib/services/github';
 	import { authStore } from '$lib/stores/auth';
 	import { repositories } from '$lib/stores/repositories';
+	import { validateRepositoryName } from '$lib/utils/security';
 
 	let { open = $bindable(false) }: { open?: boolean } = $props();
 
@@ -15,8 +16,12 @@
 	let error = $state<string | null>(null);
 
 	async function handleCreate() {
-		if (!repoName.trim()) {
-			error = 'Repository name is required';
+		const trimmedName = repoName.trim();
+
+		// Validate repository name
+		const validation = validateRepositoryName(trimmedName);
+		if (!validation.valid) {
+			error = validation.error || 'Invalid repository name';
 			return;
 		}
 
@@ -27,7 +32,7 @@
 
 		try {
 			const config = { token: $authStore.token, userEmail: $authStore.user.email };
-			const newRepo = await createRepository(config, repoName.trim());
+			const newRepo = await createRepository(config, trimmedName);
 
 			// Add to repositories store
 			repositories.update((repos) => [...repos, newRepo]);
@@ -69,10 +74,16 @@
 					bind:value={repoName}
 					placeholder="my-cdn-files"
 					disabled={loading}
+					oninput={() => {
+						error = null;
+					}}
 					onkeydown={(e) => {
 						if (e.key === 'Enter') handleCreate();
 					}}
 				/>
+				<p class="text-xs text-muted-foreground">
+					Alphanumeric, hyphens, underscores, and periods only. Max 100 characters.
+				</p>
 				{#if error}
 					<p class="text-sm text-destructive">{error}</p>
 				{/if}
