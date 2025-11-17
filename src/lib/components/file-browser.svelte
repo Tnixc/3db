@@ -19,8 +19,11 @@
 	import FileActionsMenu from './file-actions-menu.svelte';
 	import DataTableSortButton from './data-table-sort-button.svelte';
 	import DataTableNameCell from './data-table-name-cell.svelte';
+	import RenameDialog from './rename-dialog.svelte';
 
 	let hoveredRow = $state<number | null>(null);
+	let renameDialogOpen = $state(false);
+	let renameFile = $state<FileContent | null>(null);
 
 	let {
 		currentPath = $bindable(''),
@@ -173,73 +176,69 @@
 	}
 
 	async function handleRename(file: FileContent) {
-		const newName = prompt(`Rename ${file.type === 'dir' ? 'folder' : 'file'}:`, file.name);
-		if (!newName || newName === file.name) return;
+		renameFile = file;
+		renameDialogOpen = true;
+	}
 
+	async function performRename(file: FileContent, newName: string) {
 		if (!$currentRepository || $authStore.status !== 'ready') return;
 
-		try {
-			const pathParts = file.path.split('/');
-			pathParts[pathParts.length - 1] = newName;
-			const newPath = pathParts.join('/');
+		const pathParts = file.path.split('/');
+		pathParts[pathParts.length - 1] = newName;
+		const newPath = pathParts.join('/');
 
-			if (file.type === 'file') {
-				// For files: download content, create new file, delete old file
-				const contentResponse = await fetch(file.download_url);
-				const content = await contentResponse.text();
+		if (file.type === 'file') {
+			// For files: download content, create new file, delete old file
+			const contentResponse = await fetch(file.download_url);
+			const content = await contentResponse.text();
 
-				// Create new file using server API
-				const createResponse = await fetch(
-					`/api/repos/${$currentRepository.owner.login}/${$currentRepository.name}/contents`,
-					{
-						method: 'PUT',
-						headers: {
-							'Content-Type': 'application/json'
-						},
-						body: JSON.stringify({
-							path: newPath,
-							content,
-							message: `Rename ${file.name} to ${newName}`
-						}),
-						credentials: 'same-origin'
-					}
-				);
-
-				if (!createResponse.ok) {
-					throw new Error(`Failed to create renamed file: ${createResponse.statusText}`);
+			// Create new file using server API
+			const createResponse = await fetch(
+				`/api/repos/${$currentRepository.owner.login}/${$currentRepository.name}/contents`,
+				{
+					method: 'PUT',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({
+						path: newPath,
+						content,
+						message: `Rename ${file.name} to ${newName}`
+					}),
+					credentials: 'same-origin'
 				}
+			);
 
-				// Delete old file using server API
-				const deleteResponse = await fetch(
-					`/api/repos/${$currentRepository.owner.login}/${$currentRepository.name}/contents`,
-					{
-						method: 'DELETE',
-						headers: {
-							'Content-Type': 'application/json'
-						},
-						body: JSON.stringify({
-							path: file.path,
-							sha: file.sha,
-							isFolder: false
-						}),
-						credentials: 'same-origin'
-					}
-				);
-
-				if (!deleteResponse.ok) {
-					throw new Error(`Failed to delete old file: ${deleteResponse.statusText}`);
-				}
-			} else {
-				// For folders: need to recursively move all contents
-				alert('Folder renaming is not yet supported. Please use GitHub web interface.');
-				return;
+			if (!createResponse.ok) {
+				throw new Error(`Failed to create renamed file: ${createResponse.statusText}`);
 			}
 
-			await loadFiles();
-		} catch (err) {
-			console.error('Failed to rename:', err);
-			alert('Failed to rename item');
+			// Delete old file using server API
+			const deleteResponse = await fetch(
+				`/api/repos/${$currentRepository.owner.login}/${$currentRepository.name}/contents`,
+				{
+					method: 'DELETE',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify({
+						path: file.path,
+						sha: file.sha,
+						isFolder: false
+					}),
+					credentials: 'same-origin'
+				}
+			);
+
+			if (!deleteResponse.ok) {
+				throw new Error(`Failed to delete old file: ${deleteResponse.statusText}`);
+			}
+		} else {
+			// For folders: need to recursively move all contents
+			throw new Error('Folder renaming is not yet supported. Please use GitHub web interface.');
 		}
+
+		await loadFiles();
 	}
 
 	function formatBytes(bytes: number): string {
@@ -436,10 +435,10 @@
 				{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
 					{#each headerGroup.headers as header (header.id)}
 						<div
-							class="text-muted-foreground h-12 px-4 text-left align-middle text-sm font-medium flex items-center border-b bg-muted/50 {header.column.id === 'actions' ? 'justify-end' : ''}"
+							class="text-muted-foreground h-12 px-2 text-left align-middle text-sm font-medium flex items-center border-b bg-muted/50 {header.column.id === 'actions' ? 'justify-end' : ''}"
 						>
 							{#if !header.isPlaceholder}
-								<div class="translate-x-4">
+								<div class="translate-x-2">
 									<FlexRender
 										content={header.column.columnDef.header}
 										context={header.getContext()}
@@ -460,7 +459,7 @@
 						{#each row.getVisibleCells() as cell, cellIdx (cell.id)}
 							<!-- svelte-ignore a11y_no_static_element_interactions -->
 							<div
-								class="p-4 align-middle text-sm flex items-center border-b transition-colors {cell.column.id === 'actions' ? 'justify-end' : ''} {cellIdx === 0 ? 'col-start-1' : ''} {hoveredRow === rowIdx && !row.getIsSelected() ? 'bg-muted/50' : ''}"
+								class="p-2 align-middle text-sm flex items-center border-b transition-colors {cell.column.id === 'actions' ? 'justify-end' : ''} {cellIdx === 0 ? 'col-start-1' : ''} {hoveredRow === rowIdx && !row.getIsSelected() ? 'bg-muted/50' : ''}"
 								class:bg-muted={row.getIsSelected()}
 								onmouseenter={() => (hoveredRow = rowIdx)}
 								onmouseleave={() => (hoveredRow = null)}
@@ -477,3 +476,6 @@
 		</div>
 	{/if}
 </div>
+
+<!-- Dialogs -->
+<RenameDialog bind:open={renameDialogOpen} bind:file={renameFile} onRename={performRename} />
