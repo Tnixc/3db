@@ -46,9 +46,9 @@ export const GET: RequestHandler = async ({ cookies, params, url }) => {
 		}
 
 		return json(contents);
-	} catch (err) {
+	} catch (err: any) {
 		console.error('Error fetching contents:', err);
-		throw error(500, 'Failed to fetch contents');
+		throw error(500, err.message || 'Failed to fetch contents');
 	}
 };
 
@@ -66,17 +66,23 @@ export const PUT: RequestHandler = async ({ cookies, params, request }) => {
 	try {
 		const user = JSON.parse(userStr);
 		const config: GitHubConfig = { token, userEmail: user.email };
-		const { path, content, message, sha } = await request.json();
+		const { path, content, message, sha, isBinary } = await request.json();
 
 		if (!path || content === undefined) {
 			throw error(400, 'Path and content are required');
 		}
 
-		await github.createFile(config, owner, repo, path, content, message, sha);
+		// Convert array of bytes back to ArrayBuffer for binary files
+		let fileContent = content;
+		if (isBinary && Array.isArray(content)) {
+			fileContent = new Uint8Array(content).buffer;
+		}
+
+		await github.createFile(config, owner, repo, path, fileContent, message, sha);
 		return json({ success: true });
-	} catch (err) {
+	} catch (err: any) {
 		console.error('Error creating/updating file:', err);
-		throw error(500, 'Failed to create/update file');
+		throw error(500, err.message || 'Failed to create/update file');
 	}
 };
 
@@ -110,8 +116,8 @@ export const DELETE: RequestHandler = async ({ cookies, params, request }) => {
 		}
 
 		return json({ success: true });
-	} catch (err) {
+	} catch (err: any) {
 		console.error('Error deleting file/folder:', err);
-		throw error(500, 'Failed to delete file/folder');
+		throw error(500, err.message || 'Failed to delete file/folder');
 	}
 };

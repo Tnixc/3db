@@ -44,7 +44,19 @@ async function request(
 	if (!response.ok) {
 		const errorText = await response.text();
 		console.error(`GitHub API error [${response.status}]:`, errorText);
-		throw new GitHubError(response.status, response.statusText);
+
+		// Parse error to provide better messages
+		let errorMessage = response.statusText;
+		try {
+			const errorData = JSON.parse(errorText);
+			if (errorData.message) {
+				errorMessage = errorData.message;
+			}
+		} catch (e) {
+			// Couldn't parse, use default
+		}
+
+		throw new GitHubError(response.status, errorMessage);
 	}
 
 	// Handle empty responses (like 204 No Content)

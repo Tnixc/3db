@@ -11,7 +11,7 @@ export const GET: RequestHandler = async ({ url }) => {
 
 	const params = new URLSearchParams({
 		client_id: GITHUB_CLIENT_ID,
-		scope: 'repo',
+		scope: 'repo user:email', // repo for full access, user:email to get private email
 		redirect_uri: redirectUri
 	});
 

@@ -85,7 +85,10 @@
 				uploadProgress = `Uploading ${i + 1}/${fileArray.length}: ${sanitizedName}`;
 
 				const path = currentPath ? `${currentPath}/${sanitizedName}` : sanitizedName;
-				const content = await file.arrayBuffer();
+				const arrayBuffer = await file.arrayBuffer();
+
+				// Convert ArrayBuffer to array of bytes for JSON serialization
+				const contentBytes = Array.from(new Uint8Array(arrayBuffer));
 
 				// Use server API to upload file (accesses httpOnly cookie)
 				const response = await fetch(
@@ -97,14 +100,16 @@
 						},
 						body: JSON.stringify({
 							path,
-							content
+							content: contentBytes,
+							isBinary: true
 						}),
 						credentials: 'same-origin'
 					}
 				);
 
 				if (!response.ok) {
-					throw new Error(`Failed to upload ${sanitizedName}: ${response.statusText}`);
+					const errorText = await response.text();
+					throw new Error(`Failed to upload ${sanitizedName}: ${errorText}`);
 				}
 			}
 
