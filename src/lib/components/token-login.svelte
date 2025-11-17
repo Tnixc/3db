@@ -61,12 +61,12 @@
 			</Button>
 		</div>
 
-		<div class="border-primary rounded-lg border bg-primary/10 p-4">
-			<h3 class="mb-2 flex items-center gap-2 font-medium text-primary-foreground">
+		<div class="rounded-lg border border-accent bg-accent p-4">
+			<h3 class="mb-2 flex items-center gap-2 font-medium text-accent-foreground">
 				<Icon icon="lucide:info" class="h-4 w-4" />
 				After logging in
 			</h3>
-			<ol class="list-inside list-decimal space-y-1 text-sm text-primary-foreground">
+			<ol class="list-inside list-decimal space-y-1 text-sm text-accent-foreground">
 				<li>Initial setup may take 15-30 seconds</li>
 				<li>A repository called '3db-service' will be created to store metadata</li>
 				<li>You'll see a loading screen while we set everything up</li>
@@ -120,9 +120,9 @@
 			</p>
 		</div>
 
-		<div class="bg-destructive/10 rounded-lg p-4">
-			<h3 class="text-destructive mb-2 font-medium">Warning</h3>
-			<p class="text-destructive text-sm">
+		<div class="rounded-lg border border-destructive bg-card p-4">
+			<h3 class="mb-2 font-medium text-destructive">Warning</h3>
+			<p class="text-sm text-destructive">
 				This is an experimental project. Only use for non-critical data. Files are public and
 				GitHub's 5GB repository limit applies.
 			</p>
