@@ -265,8 +265,7 @@
 					};
 				});
 				return renderSnippet(typeSnippet, { type: row.original.type });
-			},
-			size: 120
+			}
 		},
 		{
 			accessorKey: 'size',
@@ -291,8 +290,7 @@
 				const sizeA = rowA.original.type === 'dir' ? -1 : rowA.original.size;
 				const sizeB = rowB.original.type === 'dir' ? -1 : rowB.original.size;
 				return sizeA - sizeB;
-			},
-			size: 120
+			}
 		},
 		{
 			accessorKey: 'last_modified',
@@ -317,8 +315,7 @@
 				const dateA = rowA.original.last_modified ? new Date(rowA.original.last_modified).getTime() : 0;
 				const dateB = rowB.original.last_modified ? new Date(rowB.original.last_modified).getTime() : 0;
 				return dateA - dateB;
-			},
-			size: 180
+			}
 		},
 		{
 			id: 'actions',
@@ -333,8 +330,7 @@
 					onRename: handleRename,
 					onDelete: handleDelete
 				});
-			},
-			size: 48
+			}
 		}
 	];
 
@@ -400,10 +396,10 @@
 			<div class="w-full">
 				<!-- Header -->
 				{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
-					<div class="grid grid-cols-[1fr_120px_120px_180px_48px] border-b bg-muted/50">
+					<div class="grid grid-cols-[1fr_auto_auto_auto_auto] border-b bg-muted/50">
 						{#each headerGroup.headers as header (header.id)}
 							<div
-								class="text-muted-foreground h-12 px-4 text-left align-middle text-sm font-medium {header.column.id === 'actions' ? 'flex items-center justify-end pr-2' : 'flex items-center'}"
+								class="text-muted-foreground h-12 px-4 text-left align-middle text-sm font-medium flex items-center {header.column.id === 'actions' ? 'justify-end' : ''}"
 							>
 								{#if !header.isPlaceholder}
 									<FlexRender
@@ -424,12 +420,12 @@
 				{:else}
 					{#each table.getRowModel().rows as row (row.id)}
 						<div
-							class="grid grid-cols-[1fr_120px_120px_180px_48px] border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
+							class="grid grid-cols-[1fr_auto_auto_auto_auto] border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
 							data-state={row.getIsSelected() ? 'selected' : undefined}
 						>
 							{#each row.getVisibleCells() as cell (cell.id)}
 								<div
-									class="p-4 align-middle text-sm {cell.column.id === 'actions' ? 'flex items-center justify-end pr-2' : 'flex items-center'}"
+									class="p-4 align-middle text-sm flex items-center {cell.column.id === 'actions' ? 'justify-end' : ''}"
 								>
 									<FlexRender
 										content={cell.column.columnDef.cell}
