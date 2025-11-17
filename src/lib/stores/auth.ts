@@ -1,8 +1,22 @@
 import { writable, derived, get } from 'svelte/store';
 import { browser } from '$app/environment';
 
+/**
+ * SECURITY WARNING: Storing tokens in localStorage is insecure
+ * - Vulnerable to XSS attacks
+ * - Accessible by browser extensions
+ * - No automatic expiration
+ *
+ * TODO: Migrate to httpOnly cookies with server-side session management
+ * See SECURITY_AUDIT.md for details
+ */
+
 const GITHUB_TOKEN_KEY = '3db_github_token';
 const GITHUB_USER_KEY = '3db_github_user';
+const TOKEN_TIMESTAMP_KEY = '3db_token_timestamp';
+
+// Token expiration: 30 days (reasonable for PATs)
+const TOKEN_EXPIRATION_MS = 30 * 24 * 60 * 60 * 1000;
 
 export interface GitHubUser {
 	login: string;
@@ -19,14 +33,48 @@ export type AuthState =
 	| { status: 'ready'; token: string; user: GitHubUser }
 	| { status: 'error'; error: string; token: string; user: GitHubUser };
 
+/**
+ * Check if a stored token has expired
+ */
+function isTokenExpired(): boolean {
+	if (!browser) return false;
+
+	const timestamp = localStorage.getItem(TOKEN_TIMESTAMP_KEY);
+	if (!timestamp) return true; // No timestamp = expired
+
+	const tokenAge = Date.now() - parseInt(timestamp, 10);
+	return tokenAge > TOKEN_EXPIRATION_MS;
+}
+
+/**
+ * Clear all stored authentication data
+ */
+function clearStoredAuth() {
+	if (!browser) return;
+
+	localStorage.removeItem(GITHUB_TOKEN_KEY);
+	localStorage.removeItem(GITHUB_USER_KEY);
+	localStorage.removeItem(TOKEN_TIMESTAMP_KEY);
+}
+
 function createAuthStore() {
 	// Initialize from localStorage
 	const initialToken = browser ? localStorage.getItem(GITHUB_TOKEN_KEY) : null;
 	const initialUser = browser ? JSON.parse(localStorage.getItem(GITHUB_USER_KEY) || 'null') : null;
 
-	const initialState: AuthState = initialToken && initialUser
-		? { status: 'logged_in', token: initialToken, user: initialUser }
-		: { status: 'logged_out' };
+	// Check token expiration
+	let initialState: AuthState;
+	if (initialToken && initialUser) {
+		if (isTokenExpired()) {
+			console.warn('Stored token has expired, clearing authentication');
+			clearStoredAuth();
+			initialState = { status: 'logged_out' };
+		} else {
+			initialState = { status: 'logged_in', token: initialToken, user: initialUser };
+		}
+	} else {
+		initialState = { status: 'logged_out' };
+	}
 
 	const { subscribe, set, update } = writable<AuthState>(initialState);
 
@@ -42,6 +90,7 @@ function createAuthStore() {
 				if (browser) {
 					localStorage.setItem(GITHUB_TOKEN_KEY, token);
 					localStorage.setItem(GITHUB_USER_KEY, JSON.stringify(user));
+					localStorage.setItem(TOKEN_TIMESTAMP_KEY, Date.now().toString());
 				}
 
 				set({ status: 'logged_in', token, user });
@@ -52,10 +101,7 @@ function createAuthStore() {
 		},
 
 		logout() {
-			if (browser) {
-				localStorage.removeItem(GITHUB_TOKEN_KEY);
-				localStorage.removeItem(GITHUB_USER_KEY);
-			}
+			clearStoredAuth();
 			set({ status: 'logged_out' });
 		},
 
