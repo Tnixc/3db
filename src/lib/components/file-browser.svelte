@@ -119,7 +119,7 @@
 	async function handleDelete(file: FileContent) {
 		if (!$currentRepository || $authStore.status !== 'ready') return;
 
-		if (!confirm(`Are you sure you want to delete ${file.name}?`)) return;
+		if (!confirm(`Are you sure you want to delete ${file.name}?\n\nWarning: Even after deletion, this file will remain in the repository's commit history and can be recovered. Files uploaded to Git are never truly deleted.`)) return;
 
 		try {
 			// Use server API to delete file/folder (accesses httpOnly cookie)

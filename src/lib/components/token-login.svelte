@@ -53,14 +53,14 @@
 		<div>
 			<h2 class="mb-2 text-xl font-semibold">Use GitHub as a CDN</h2>
 			<p class="text-muted-foreground">
-				3db provides a simple interface to use GitHub repositories as a content delivery network
-				or file store. Pretty flaky, but works.
+				3db provides a simple interface to use GitHub repositories as a content delivery network or
+				file store. Pretty flaky, but works.
 			</p>
 		</div>
 
 		<div class="space-y-4">
 			<h3 class="font-medium">Features:</h3>
-			<ul class="list-inside list-disc space-y-2 text-muted-foreground">
+			<ul class="text-muted-foreground list-inside list-disc space-y-2">
 				<li>Create and connect multiple repositories</li>
 				<li>Upload and delete files</li>
 				<li>Browse files and folders</li>
@@ -68,16 +68,16 @@
 			</ul>
 		</div>
 
-		<div class="rounded-lg bg-muted p-4">
+		<div class="bg-muted rounded-lg p-4">
 			<h3 class="mb-2 font-medium">How it works:</h3>
-			<p class="text-sm text-muted-foreground">
-				A repository called '3db-service' will be created to store metadata. You can then create
-				or connect repositories to use as storage. Files are stored in public GitHub repositories
-				and served via GitHub's CDN.
+			<p class="text-muted-foreground text-sm">
+				A repository called '3db-service' will be created to store metadata. You can then create or
+				connect repositories to use as storage. Files are stored in public GitHub repositories and
+				served via GitHub's CDN.
 			</p>
 		</div>
 
-		<div class="rounded-lg bg-destructive/10 p-4">
+		<div class="rounded-lg border border-destructive bg-card p-4">
 			<h3 class="mb-2 font-medium text-destructive">Warning</h3>
 			<p class="text-sm text-destructive">
 				This is an experimental project. Only use for non-critical data. Files are public and
@@ -85,8 +85,8 @@
 			</p>
 		</div>
 
-		<div class="text-sm text-muted-foreground">
-			<a href="https://github.com/tnixc/3db" class="underline hover:text-primary" target="_blank">
+		<div class="text-muted-foreground text-sm">
+			<a href="https://github.com/tnixc/3db" class="hover:text-primary underline" target="_blank">
 				View source code on GitHub
 			</a>
 		</div>

@@ -137,6 +137,8 @@
 			<Dialog.Title>Upload Files</Dialog.Title>
 			<Dialog.Description>
 				Upload files to {currentPath || 'root folder'} in {$currentRepository?.name}
+				<br /><br />
+				<strong>Note:</strong> Once uploaded, files will remain in the repository's commit history permanently, even if deleted later.
 			</Dialog.Description>
 		</Dialog.Header>
 		<div class="grid gap-4 py-4">

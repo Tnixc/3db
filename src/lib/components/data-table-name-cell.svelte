@@ -11,17 +11,23 @@
 {#if file.type === 'dir'}
 	<Button
 		variant="ghost"
-		class="h-auto p-0 hover:bg-transparent"
+		class="group/row h-auto w-full p-0 hover:bg-transparent"
 		onclick={() => onNavigate(file.path)}
 	>
-		<div class="flex items-center gap-2">
+		<div class="flex w-full items-center gap-2">
 			<Icon {icon} class="size-4 shrink-0" />
-			<span>{file.name}</span>
+			<span class="flex-1 truncate text-left">{file.name}</span>
+			<div class="w-4 shrink-0">
+				<Icon icon="lucide:chevron-right" class="size-4 opacity-0 transition-opacity group-hover/row:opacity-100" />
+			</div>
 		</div>
 	</Button>
 {:else}
-	<div class="flex items-center gap-2">
+	<div class="flex w-full items-center gap-2">
 		<Icon {icon} class="size-4 shrink-0" />
-		<span>{file.name}</span>
+		<span class="flex-1 truncate text-left">{file.name}</span>
+		<div class="w-4 shrink-0" aria-hidden="true">
+			<!-- Empty spacer to match folder row layout -->
+		</div>
 	</div>
 {/if}
