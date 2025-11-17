@@ -7,6 +7,11 @@
 	import { createFile } from '$lib/services/github';
 	import { authStore } from '$lib/stores/auth';
 	import { currentRepository } from '$lib/stores/repositories';
+	import {
+		sanitizeFilename,
+		validateFileSize,
+		isBlockedFileExtension
+	} from '$lib/utils/security';
 
 	let {
 		open = $bindable(false),
@@ -23,31 +28,16 @@
 	let error = $state<string | null>(null);
 	let uploadProgress = $state<string>('');
 
-	// Security: File upload constraints
-	const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB (GitHub recommended limit)
-	const BLOCKED_EXTENSIONS = ['.exe', '.bat', '.cmd', '.sh', '.ps1', '.scr', '.msi', '.dll'];
-
-	function sanitizeFilename(filename: string): string {
-		// Remove path separators and path traversal attempts
-		return filename
-			.replace(/\.\./g, '')
-			.replace(/[\/\\]/g, '_')
-			.replace(/^\.+/, '') // Remove leading dots
-			.trim();
-	}
-
 	function validateFile(file: File): { valid: boolean; error?: string } {
 		// Check file size
-		if (file.size > MAX_FILE_SIZE) {
-			return {
-				valid: false,
-				error: `File "${file.name}" exceeds 100MB limit (${(file.size / 1024 / 1024).toFixed(2)}MB)`
-			};
+		const sizeValidation = validateFileSize(file.size);
+		if (!sizeValidation.valid) {
+			return { valid: false, error: `"${file.name}": ${sizeValidation.error}` };
 		}
 
 		// Check for blocked extensions
-		const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
-		if (BLOCKED_EXTENSIONS.includes(ext)) {
+		if (isBlockedFileExtension(file.name)) {
+			const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase();
 			return {
 				valid: false,
 				error: `File type "${ext}" is blocked for security reasons`
