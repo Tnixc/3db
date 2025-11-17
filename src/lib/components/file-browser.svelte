@@ -7,7 +7,6 @@
 		getSortedRowModel
 	} from '@tanstack/table-core';
 	import { createSvelteTable, FlexRender } from '$lib/components/ui/data-table/index.js';
-	import * as Table from '$lib/components/ui/table/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import Icon from '@iconify/svelte';
 	import { createRawSnippet } from 'svelte';
@@ -398,51 +397,50 @@
 		</div>
 	{:else}
 		<div class="rounded-md border">
-			<Table.Root class="table-fixed w-full">
-				<Table.Header>
-					{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
-						<Table.Row>
-							{#each headerGroup.headers as header (header.id)}
-								<Table.Head
-									colspan={header.colSpan}
-									class={header.column.id === 'actions' ? 'w-12 text-right pr-2' : ''}
-									style={header.column.columnDef.size && header.column.id !== 'actions' ? `width: ${header.column.columnDef.size}px` : ''}
-								>
-									{#if !header.isPlaceholder}
-										<FlexRender
-											content={header.column.columnDef.header}
-											context={header.getContext()}
-										/>
-									{/if}
-								</Table.Head>
-							{/each}
-						</Table.Row>
-					{/each}
-				</Table.Header>
-				<Table.Body>
+			<div class="w-full">
+				<!-- Header -->
+				{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
+					<div class="grid grid-cols-[1fr_120px_120px_180px_48px] border-b bg-muted/50">
+						{#each headerGroup.headers as header (header.id)}
+							<div
+								class="text-muted-foreground h-12 px-4 text-left align-middle text-sm font-medium {header.column.id === 'actions' ? 'flex items-center justify-end pr-2' : 'flex items-center'}"
+							>
+								{#if !header.isPlaceholder}
+									<FlexRender
+										content={header.column.columnDef.header}
+										context={header.getContext()}
+									/>
+								{/if}
+							</div>
+						{/each}
+					</div>
+				{/each}
+
+				<!-- Body -->
+				{#if table.getRowModel().rows.length === 0}
+					<div class="flex h-24 items-center justify-center text-sm text-muted-foreground">
+						This folder is empty
+					</div>
+				{:else}
 					{#each table.getRowModel().rows as row (row.id)}
-						<Table.Row data-state={row.getIsSelected() && 'selected'}>
+						<div
+							class="grid grid-cols-[1fr_120px_120px_180px_48px] border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
+							data-state={row.getIsSelected() ? 'selected' : undefined}
+						>
 							{#each row.getVisibleCells() as cell (cell.id)}
-								<Table.Cell
-									style={cell.column.columnDef.size && cell.column.id !== 'actions' ? `width: ${cell.column.columnDef.size}px` : ''}
-									class={cell.column.id === 'actions' ? 'w-12 text-right pr-2' : ''}
+								<div
+									class="p-4 align-middle text-sm {cell.column.id === 'actions' ? 'flex items-center justify-end pr-2' : 'flex items-center'}"
 								>
 									<FlexRender
 										content={cell.column.columnDef.cell}
 										context={cell.getContext()}
 									/>
-								</Table.Cell>
+								</div>
 							{/each}
-						</Table.Row>
-					{:else}
-						<Table.Row>
-							<Table.Cell colspan={columns.length} class="h-24 text-center">
-								This folder is empty
-							</Table.Cell>
-						</Table.Row>
+						</div>
 					{/each}
-				</Table.Body>
-			</Table.Root>
+				{/if}
+			</div>
 		</div>
 	{/if}
 </div>
