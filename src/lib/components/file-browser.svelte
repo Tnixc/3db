@@ -392,8 +392,8 @@
 			<p class="text-destructive">{error}</p>
 		</div>
 	{:else}
-		<div class="rounded-md border">
-			<div class="w-full">
+		<div class="rounded-md border overflow-x-auto">
+			<div class="w-full min-w-[640px]">
 				<!-- Header -->
 				{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
 					<div class="grid grid-cols-[1fr_auto_auto_auto_auto] border-b bg-muted/50">
