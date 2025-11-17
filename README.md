@@ -1,10 +1,14 @@
 # 3db
 
-A UI for using GitHub repositories as a CDN/file store. Pretty flaky, but works.
+A UI for using GitHub repositories as a CDN/file store. Also get masked cdn links
 
 
 
-https://github.com/user-attachments/assets/29c5a822-ea87-41ea-94e0-a5555aa45c93
+https://github.com/user-attachments/assets/8ba55030-f049-4248-baf9-cc471043b027
+
+
+
+
 
 
 
@@ -17,7 +21,7 @@ https://github.com/user-attachments/assets/29c5a822-ea87-41ea-94e0-a5555aa45c93
 
 1. Create and manage GitHub repositories as storage
 2. Upload, browse and manage files
-3. Get direct CDN links to your files
+3. Get masked CDN links to your files
 
 When you first authenticate:
 
@@ -29,11 +33,9 @@ When you first authenticate:
 ## Features
 
 - GitHub OAuth authentication
+- **Copy masked CDN links**
 - Create and connect multiple repositories
-- ️ Upload and delete files
-- Browse files and folders
-- Copy direct CDN links
-- ️ Delete files and folders
+- ️Upload, rename and delete files
 
 ## Limitations
 
