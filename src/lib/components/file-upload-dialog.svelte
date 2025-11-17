@@ -3,7 +3,8 @@
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
-	import Icon from '@iconify/svelte';
+	import LoaderCircle from 'lucide-svelte/icons/loader-circle';
+	import Upload from 'lucide-svelte/icons/upload';
 	import { authStore } from '$lib/stores/auth';
 	import { currentRepository } from '$lib/stores/repositories';
 	import {
@@ -172,10 +173,10 @@
 			<Button variant="outline" onclick={() => (open = false)} disabled={loading}>Cancel</Button>
 			<Button onclick={handleUpload} disabled={loading || !files || files.length === 0}>
 				{#if loading}
-					<Icon icon="lucide:loader-2" class="mr-2 size-4 animate-spin" />
+					<LoaderCircle class="mr-2 size-4 animate-spin" />
 					Uploading...
 				{:else}
-					<Icon icon="lucide:upload" class="mr-2 size-4" />
+					<Upload class="mr-2 size-4" />
 					Upload
 				{/if}
 			</Button>

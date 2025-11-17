@@ -5,7 +5,8 @@
 	import UserMenu from '$lib/components/user-menu.svelte';
 	import { repositories, currentRepository } from '$lib/stores/repositories';
 	import { authStore } from '$lib/stores/auth';
-	import Icon from '@iconify/svelte';
+	import Database from 'lucide-svelte/icons/database';
+	import Plus from 'lucide-svelte/icons/plus';
 
 	let { onCreateRepo, onSignOut }: { onCreateRepo: () => void; onSignOut: () => void } = $props();
 </script>
@@ -33,7 +34,7 @@
 								isActive={$currentRepository?.id === repo.id}
 								onclick={() => currentRepository.set(repo)}
 							>
-								<Icon icon="lucide:database" class="size-4" />
+								<Database class="size-4" />
 								<span class="truncate">{repo.name}</span>
 							</Sidebar.MenuButton>
 							<Sidebar.MenuAction>
@@ -54,7 +55,7 @@
 		<Sidebar.Menu>
 			<Sidebar.MenuItem>
 				<Button class="w-full" onclick={onCreateRepo}>
-					<Icon icon="lucide:plus" class="mr-2 size-4" />
+					<Plus class="mr-2 size-4" />
 					New Repository
 				</Button>
 			</Sidebar.MenuItem>

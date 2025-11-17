@@ -1,11 +1,11 @@
 <script lang="ts">
 	import type { FileContent } from '$lib/types';
 	import { Button } from '$lib/components/ui/button';
-	import Icon from '@iconify/svelte';
+	import Folder from 'lucide-svelte/icons/folder';
+	import File from 'lucide-svelte/icons/file';
+	import ChevronRight from 'lucide-svelte/icons/chevron-right';
 
 	let { file, onNavigate }: { file: FileContent; onNavigate: (path: string) => void } = $props();
-
-	const icon = $derived(file.type === 'dir' ? 'lucide:folder' : 'lucide:file');
 </script>
 
 {#if file.type === 'dir'}
@@ -15,16 +15,16 @@
 		onclick={() => onNavigate(file.path)}
 	>
 		<div class="flex w-full items-center gap-2">
-			<Icon {icon} class="size-4 shrink-0" />
+			<Folder class="size-4 shrink-0" />
 			<span class="flex-1 truncate text-left">{file.name}</span>
 			<div class="w-4 shrink-0">
-				<Icon icon="lucide:chevron-right" class="size-4 opacity-0 transition-opacity group-hover/row:opacity-100" />
+				<ChevronRight class="size-4 opacity-0 transition-opacity group-hover/row:opacity-100" />
 			</div>
 		</div>
 	</Button>
 {:else}
 	<div class="flex w-full items-center gap-2">
-		<Icon {icon} class="size-4 shrink-0" />
+		<File class="size-4 shrink-0" />
 		<span class="flex-1 truncate text-left">{file.name}</span>
 		<div class="w-4 shrink-0" aria-hidden="true">
 			<!-- Empty spacer to match folder row layout -->

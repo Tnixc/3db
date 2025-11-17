@@ -2,7 +2,10 @@
 	import type { Repository } from '$lib/types';
 	import { Button } from '$lib/components/ui/button/index.js';
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
-	import Icon from '@iconify/svelte';
+	import MoreHorizontal from 'lucide-svelte/icons/more-horizontal';
+	import ExternalLink from 'lucide-svelte/icons/external-link';
+	import Copy from 'lucide-svelte/icons/copy';
+	import Trash from 'lucide-svelte/icons/trash';
 	import { authStore } from '$lib/stores/auth';
 	import { repositories, currentRepository } from '$lib/stores/repositories';
 
@@ -55,7 +58,7 @@
 	<DropdownMenu.Trigger>
 		{#snippet child({ props })}
 			<Button {...props} variant="ghost" size="icon" class="size-6">
-				<Icon icon="lucide:more-horizontal" class="size-4" />
+				<MoreHorizontal class="size-4" />
 				<span class="sr-only">Repository menu</span>
 			</Button>
 		{/snippet}
@@ -64,17 +67,17 @@
 		<DropdownMenu.Label>Repository Actions</DropdownMenu.Label>
 		<DropdownMenu.Separator />
 		<DropdownMenu.Item onclick={() => window.open(repo.html_url, '_blank')}>
-			<Icon icon="lucide:external-link" class="mr-2 size-4" />
+			<ExternalLink class="mr-2 size-4" />
 			Open in GitHub
 		</DropdownMenu.Item>
 		<DropdownMenu.Item onclick={copyRepoUrl}>
-			<Icon icon="lucide:copy" class="mr-2 size-4" />
+			<Copy class="mr-2 size-4" />
 			Copy URL
 		</DropdownMenu.Item>
 		{#if !isServiceRepo}
 			<DropdownMenu.Separator />
 			<DropdownMenu.Item onclick={handleDelete} class="text-destructive">
-				<Icon icon="lucide:trash" class="mr-2 size-4" />
+				<Trash class="mr-2 size-4" />
 				Delete Repository
 			</DropdownMenu.Item>
 		{/if}

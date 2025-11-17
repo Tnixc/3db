@@ -12,8 +12,6 @@
 		"lint": "prettier --check . && eslint ."
 	},
 	"devDependencies": {
-		"@iconify/svelte": "^4.0.2",
-		"@lucide/svelte": "^0.553.0",
 		"@sveltejs/adapter-auto": "^7.0.0",
 		"@sveltejs/kit": "^2.48.5",
 		"@sveltejs/vite-plugin-svelte": "^5.1.1",
@@ -25,6 +23,7 @@
 		"eslint-config-prettier": "^9.1.0",
 		"eslint-plugin-svelte": "^2.36.0",
 		"globals": "^15.0.0",
+		"lucide-svelte": "^0.468.0",
 		"mode-watcher": "^1.1.0",
 		"prettier": "^3.6.2",
 		"prettier-plugin-svelte": "^3.4.0",

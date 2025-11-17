@@ -8,7 +8,10 @@
 	} from '@tanstack/table-core';
 	import { createSvelteTable, FlexRender } from '$lib/components/ui/data-table/index.js';
 	import { Button } from '$lib/components/ui/button/index.js';
-	import Icon from '@iconify/svelte';
+	import ArrowLeft from 'lucide-svelte/icons/arrow-left';
+	import RefreshCw from 'lucide-svelte/icons/refresh-cw';
+	import Upload from 'lucide-svelte/icons/upload';
+	import LoaderCircle from 'lucide-svelte/icons/loader-circle';
 	import { createRawSnippet } from 'svelte';
 	import { renderSnippet, renderComponent } from '$lib/components/ui/data-table/index.js';
 	import { currentRepository } from '$lib/stores/repositories';
@@ -394,7 +397,7 @@
 		<div class="flex items-center gap-2">
 			{#if currentPath}
 				<Button variant="ghost" size="sm" onclick={goUp}>
-					<Icon icon="lucide:arrow-left" class="mr-2 size-4 shrink-0" />
+					<ArrowLeft class="mr-2 size-4 shrink-0" />
 					Back
 				</Button>
 				<span class="text-sm text-muted-foreground">/{currentPath}</span>
@@ -402,12 +405,12 @@
 		</div>
 		<div class="flex items-center gap-2">
 			<Button variant="ghost" size="sm" onclick={loadFiles} disabled={loading}>
-				<Icon icon="lucide:refresh-cw" class="mr-2 size-4 shrink-0 {loading ? 'animate-spin' : ''}" />
+				<RefreshCw class="mr-2 size-4 shrink-0 {loading ? 'animate-spin' : ''}" />
 				Refresh
 			</Button>
 			{#if onUpload}
 				<Button size="sm" onclick={onUpload}>
-					<Icon icon="lucide:upload" class="mr-2 size-4 shrink-0" />
+					<Upload class="mr-2 size-4 shrink-0" />
 					Upload Files
 				</Button>
 			{/if}
@@ -416,7 +419,7 @@
 
 	{#if loading}
 		<div class="flex h-64 items-center justify-center">
-			<Icon icon="lucide:loader-2" class="size-8 animate-spin text-primary" />
+			<LoaderCircle class="size-8 animate-spin text-primary" />
 		</div>
 	{:else if error}
 		<div class="flex h-64 items-center justify-center">

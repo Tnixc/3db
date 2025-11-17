@@ -3,7 +3,8 @@
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu/index.js';
 	import * as Avatar from '$lib/components/ui/avatar/index.js';
 	import { authStore } from '$lib/stores/auth';
-	import Icon from '@iconify/svelte';
+	import Github from 'lucide-svelte/icons/github';
+	import LogOut from 'lucide-svelte/icons/log-out';
 
 	let { onSignOut }: { onSignOut: () => void } = $props();
 
@@ -30,12 +31,12 @@
 		</DropdownMenu.Label>
 		<DropdownMenu.Separator />
 		<DropdownMenu.Item onclick={() => window.open(`https://github.com/${user?.login}`, '_blank')}>
-			<Icon icon="lucide:github" class="mr-2 size-4" />
+			<Github class="mr-2 size-4" />
 			View GitHub Profile
 		</DropdownMenu.Item>
 		<DropdownMenu.Separator />
 		<DropdownMenu.Item onclick={onSignOut} class="text-destructive">
-			<Icon icon="lucide:log-out" class="mr-2 size-4" />
+			<LogOut class="mr-2 size-4" />
 			Sign Out
 		</DropdownMenu.Item>
 	</DropdownMenu.Content>
