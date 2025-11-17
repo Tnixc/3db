@@ -422,6 +422,7 @@
 				{:else}
 					{#each table.getRowModel().rows as row, rowIdx (row.id)}
 						{#each row.getVisibleCells() as cell, cellIdx (cell.id)}
+							<!-- svelte-ignore a11y_no_static_element_interactions -->
 							<div
 								class="p-4 align-middle text-sm flex items-center border-b transition-colors {cell.column.id === 'actions' ? 'justify-end' : ''} {cellIdx === 0 ? 'col-start-1' : ''} {hoveredRow === rowIdx && !row.getIsSelected() ? 'bg-muted/50' : ''}"
 								class:bg-muted={row.getIsSelected()}
