@@ -10,7 +10,7 @@ export const POST: RequestHandler = async ({ request, cookies, url }) => {
 		return json({ error: 'Unauthorized' }, { status: 401 });
 	}
 
-	const userCookie = cookies.get('user_info');
+	const userCookie = cookies.get('github_user');
 	if (!userCookie) {
 		return json({ error: 'User info not found' }, { status: 401 });
 	}
