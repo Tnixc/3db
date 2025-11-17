@@ -125,7 +125,12 @@
 	async function handleDelete(file: FileContent) {
 		if (!$currentRepository || $authStore.status !== 'ready') return;
 
-		if (!confirm(`Are you sure you want to delete ${file.name}?\n\nWarning: Even after deletion, this file will remain in the repository's commit history and can be recovered. Files uploaded to Git are never truly deleted.`)) return;
+		if (
+			!confirm(
+				`Are you sure you want to delete ${file.name}?\n\nWarning: Even after deletion, this file will remain in the repository's commit history and can be recovered. Files uploaded to Git are never truly deleted.`
+			)
+		)
+			return;
 
 		try {
 			// Use server API to delete file/folder (accesses httpOnly cookie)
@@ -294,7 +299,8 @@
 				const typeSnippet = createRawSnippet<[{ type: string }]>((getType) => {
 					const { type } = getType();
 					return {
-						render: () => `<div class="text-muted-foreground capitalize">${type === 'dir' ? 'Folder' : 'File'}</div>`
+						render: () =>
+							`<div class="text-muted-foreground capitalize">${type === 'dir' ? 'Folder' : 'File'}</div>`
 					};
 				});
 				return renderSnippet(typeSnippet, { type: row.original.type });
@@ -345,8 +351,12 @@
 				});
 			},
 			sortingFn: (rowA, rowB) => {
-				const dateA = rowA.original.last_modified ? new Date(rowA.original.last_modified).getTime() : 0;
-				const dateB = rowB.original.last_modified ? new Date(rowB.original.last_modified).getTime() : 0;
+				const dateA = rowA.original.last_modified
+					? new Date(rowA.original.last_modified).getTime()
+					: 0;
+				const dateB = rowB.original.last_modified
+					? new Date(rowB.original.last_modified).getTime()
+					: 0;
 				return dateA - dateB;
 			}
 		},
@@ -399,7 +409,7 @@
 					<ArrowLeft class="mr-2 size-4 shrink-0" />
 					Back
 				</Button>
-				<span class="text-sm text-muted-foreground">/{currentPath}</span>
+				<span class="text-muted-foreground text-sm">/{currentPath}</span>
 			{/if}
 		</div>
 		<div class="flex items-center gap-2">
@@ -429,21 +439,22 @@
 			<p class="text-destructive">{error}</p>
 		</div>
 	{:else}
-		<div class="rounded-md border overflow-x-auto">
-			<div class="w-full min-w-[640px] grid grid-cols-[1fr_auto_auto_auto_auto]">
+		<div class="overflow-x-auto rounded-md border">
+			<div class="grid w-full min-w-[640px] grid-cols-[1fr_auto_auto_auto_auto]">
 				<!-- Header -->
 				{#each table.getHeaderGroups() as headerGroup (headerGroup.id)}
 					{#each headerGroup.headers as header (header.id)}
 						<div
-							class="text-muted-foreground h-12 px-2 text-left align-middle text-sm font-medium flex items-center border-b bg-muted/50 {header.column.id === 'actions' ? 'justify-end' : ''}"
+							class="text-muted-foreground bg-muted/50 flex h-12 items-center border-b px-4 text-left align-middle text-sm font-medium {header
+								.column.id === 'actions'
+								? 'justify-end'
+								: ''}"
 						>
 							{#if !header.isPlaceholder}
-								<div class="translate-x-2">
-									<FlexRender
-										content={header.column.columnDef.header}
-										context={header.getContext()}
-									/>
-								</div>
+								<FlexRender
+									content={header.column.columnDef.header}
+									context={header.getContext()}
+								/>
 							{/if}
 						</div>
 					{/each}
@@ -451,7 +462,9 @@
 
 				<!-- Body -->
 				{#if table.getRowModel().rows.length === 0}
-					<div class="col-span-5 flex h-24 items-center justify-center text-sm text-muted-foreground">
+					<div
+						class="text-muted-foreground col-span-5 flex h-24 items-center justify-center text-sm"
+					>
 						This folder is empty
 					</div>
 				{:else}
@@ -459,15 +472,18 @@
 						{#each row.getVisibleCells() as cell, cellIdx (cell.id)}
 							<!-- svelte-ignore a11y_no_static_element_interactions -->
 							<div
-								class="p-2 align-middle text-sm flex items-center border-b transition-colors {cell.column.id === 'actions' ? 'justify-end' : ''} {cellIdx === 0 ? 'col-start-1' : ''} {hoveredRow === rowIdx && !row.getIsSelected() ? 'bg-muted/50' : ''}"
+								class="flex items-center border-b p-2 align-middle text-sm transition-colors {cell
+									.column.id === 'actions'
+									? 'justify-end'
+									: ''} {cellIdx === 0 ? 'col-start-1' : ''} {hoveredRow === rowIdx &&
+								!row.getIsSelected()
+									? 'bg-muted/50'
+									: ''}"
 								class:bg-muted={row.getIsSelected()}
 								onmouseenter={() => (hoveredRow = rowIdx)}
 								onmouseleave={() => (hoveredRow = null)}
 							>
-								<FlexRender
-									content={cell.column.columnDef.cell}
-									context={cell.getContext()}
-								/>
+								<FlexRender content={cell.column.columnDef.cell} context={cell.getContext()} />
 							</div>
 						{/each}
 					{/each}

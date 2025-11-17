@@ -12,7 +12,7 @@
 
 <Button
 	variant="ghost"
-	class="-ml-4 h-auto p-0 hover:bg-transparent font-medium"
+	class="-ml-4 h-auto p-0 hover:bg-transparent font-medium translate-x-2"
 	onclick={column.getToggleSortingHandler()}
 	{...restProps}
 >
